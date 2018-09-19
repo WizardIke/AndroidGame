@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Assignment3</string>
+    <string name="play_game_failed">Playing the game failed</string>
+</resources>
