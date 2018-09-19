@@ -6,12 +6,14 @@ import android.os.Build;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import java.io.IOException;
 import java.util.Enumeration;
 
 import dalvik.system.DexFile;
+import dalvik.system.PathClassLoader;
 
 public class PlayGameActivity extends AppCompatActivity {
     private static boolean entityClassesLoaded = false;
@@ -68,6 +70,11 @@ public class PlayGameActivity extends AppCompatActivity {
         if(!succeeded) {
             onGameError();
         }
+
+        //default to successful run
+        Intent intent2 = new Intent();
+        intent2.setData(null);
+        setResult(RESULT_OK, intent2);
     }
 
     @Override
@@ -124,15 +131,18 @@ public class PlayGameActivity extends AppCompatActivity {
 
     private void loadEntityClasses() {
         try {
-            Class.forName("EntityGenerator");
-            Class.forName("EntityLoader");
+            Log.d("PlayGameActivity", "loading classes");
+            Class.forName("wizardike.assignment3.entities.EntityGenerator");
+            Class.forName("wizardike.assignment3.entities.EntityLoader");
 
-            String packageCodePath = getPackageCodePath();
-            DexFile df = new DexFile(packageCodePath);
+            PathClassLoader classLoader = (PathClassLoader)getClassLoader();
+            DexFile df = new DexFile(getApplicationInfo().sourceDir);
             for (Enumeration<String> iterator = df.entries(); iterator.hasMoreElements(); ) {
                 String className = iterator.nextElement();
+                Log.d("PlayGameActivity", "found class: " + className);
                 if (className.contains("wizardike.assignment3.entities")) {
-                    Class.forName(className);
+                    classLoader.loadClass(className);
+                    Log.d("PlayGameActivity", "loaded class: " + className);
                 }
             }
         } catch (ClassNotFoundException | IOException e) {

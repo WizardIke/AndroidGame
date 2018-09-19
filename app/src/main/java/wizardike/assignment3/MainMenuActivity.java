@@ -51,14 +51,9 @@ public class MainMenuActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onRestart() {
-        super.onRestart();
-        musicPlayer.reset();
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
+        musicPlayer.reset();
         musicPlayer.start();
     }
 
