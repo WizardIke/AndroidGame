@@ -8,7 +8,7 @@ import java.io.Closeable;
  * Format: rgb hold base color and a is 1 for ground and 0 for everything else.
  */
 public class GeometryBuffer implements Closeable {
-    private int depthPassFrameBufferHandle;
+    private int depthPassFrameBufferHandle = -2;
     private int frameBufferHandle;
     private int colorTextureHandle;
 
@@ -82,5 +82,9 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDeleteTextures(1, temp, 0);
         temp[0] = frameBufferHandle;
         GLES20.glDeleteFramebuffers(1, temp, 0);
+        if(depthPassFrameBufferHandle != -2) {
+            temp[0] = depthPassFrameBufferHandle;
+            GLES20.glDeleteFramebuffers(1, temp, 0);
+        }
     }
 }

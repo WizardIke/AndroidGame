@@ -10,11 +10,11 @@ import wizardike.assignment3.Engine;
 
 import static wizardike.assignment3.geometry.IntersectionTesting.isIntersecting;
 
-public class PhysicsSystem implements UpdateListener{
+public class CollisionSystem implements UpdateListener{
     private Engine world;
     private ArrayList<Collidable> collidables = new ArrayList<>();
 
-    public PhysicsSystem(Engine world) {
+    public CollisionSystem(Engine world) {
         this.world = world;
     }
 

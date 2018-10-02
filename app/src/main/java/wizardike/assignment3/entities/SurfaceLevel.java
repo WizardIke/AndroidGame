@@ -7,15 +7,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import wizardike.assignment3.Engine;
 import wizardike.assignment3.EntityStreamingManager;
+import wizardike.assignment3.Startable;
 
-public class SurfaceLevel {
+public class SurfaceLevel implements Entity, Startable {
     public static final int id = 1;
-    private static class LoadData {
-        public EntityLoader.EntityLoadedCallback callback;
-        final AtomicInteger numResourcesLoaded = new AtomicInteger(0);
-        public Entity player;
-        public DungeonLevel1 dungeonLevel1;
-    }
+
+    private EntityLoader.EntityLoadedCallback callback;
+    private final AtomicInteger numResourcesLoaded = new AtomicInteger(0);
+    private Entity player;
+    private DungeonLevel1 dungeonLevel1;
 
     static {
         EntityLoader.addEntityLoader(id, new EntityLoader.IEntityLoader() {
@@ -25,7 +25,7 @@ public class SurfaceLevel {
                 final int numberOfEntities = save.readInt();
                 if(numberOfEntities == 1) {
                     final int entityID = save.readInt();
-                    final LoadData data = new LoadData();
+                    final SurfaceLevel data = new SurfaceLevel();
                     data.callback = callback;
                     EntityLoader.loadEntity(entityID, save, engine, new EntityLoader.EntityLoadedCallback() {
                         @Override
@@ -50,18 +50,18 @@ public class SurfaceLevel {
         });
     }
 
-    private static void componentLoaded(LoadData data) {
+    private static void componentLoaded(SurfaceLevel data) {
         int numComponentsLoaded = data.numResourcesLoaded.addAndGet(1);
         if(numComponentsLoaded == 2) {
             finishLoading(data);
         }
     }
 
-    private static void finishLoading(LoadData data) {
+    private static void finishLoading(SurfaceLevel data) {
         //add player to dungeon level 1
         data.dungeonLevel1.addEntity(data.player);
         //return dungeon level 1
-        data.callback.onLoadComplete(data.dungeonLevel1);
+        data.callback.onLoadComplete(data);
     }
 
     public static int saveLength() {
@@ -72,5 +72,21 @@ public class SurfaceLevel {
         save.writeInt(id);
         save.writeInt(1); //number of entities on level
         Player.generateSave(save);
+    }
+
+    @Override
+    public <T> T getComponent(Class<T> componentType) {
+        return null;
+    }
+
+    @Override
+    public void start(Engine engine) {
+        engine.getWorld().setLevel(DungeonLevel1.id, dungeonLevel1);
+        dungeonLevel1.start(engine);
+    }
+
+    @Override
+    public void stop(Engine engine) {
+
     }
 }

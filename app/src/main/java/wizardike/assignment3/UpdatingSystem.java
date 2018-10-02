@@ -1,7 +1,8 @@
-package wizardike.assignment3.updating;
+package wizardike.assignment3;
 
 import java.util.ArrayList;
 
+import wizardike.assignment3.Updatable;
 import wizardike.assignment3.graphics.UpdateListener;
 import wizardike.assignment3.Engine;
 

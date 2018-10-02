@@ -8,11 +8,13 @@ import java.io.IOException;
 
 import wizardike.assignment3.Engine;
 import wizardike.assignment3.EntityStreamingManager;
-import wizardike.assignment3.LevelTracker;
 import wizardike.assignment3.Savable;
 import wizardike.assignment3.Startable;
+import wizardike.assignment3.graphics.UpdateListener;
+import wizardike.assignment3.physics.CollisionSystem;
+import wizardike.assignment3.UpdatingSystem;
 
-public class World implements Entity, Savable, LevelTracker, Startable {
+public class World implements Entity, Savable, Startable, UpdateListener {
     private static final String TAG = "World";
     public static final int id = 0;
 
@@ -31,9 +33,15 @@ public class World implements Entity, Savable, LevelTracker, Startable {
     private Entity level;
     private Engine engine;
 
+    private UpdatingSystem updatingSystem;
+    private CollisionSystem collisionSystem;
+
     private World(DataInputStream save, final Engine engine,
                   final EntityLoader.EntityLoadedCallback callback) throws IOException {
         this.engine = engine;
+        updatingSystem = new UpdatingSystem(engine);
+        collisionSystem = new CollisionSystem(engine);
+
         levelID = save.readInt();
         engine.getEntityStreamingManager().addEntityData(save);
         engine.getEntityStreamingManager().loadEntity(levelID, new EntityStreamingManager.Request() {
@@ -46,9 +54,9 @@ public class World implements Entity, Savable, LevelTracker, Startable {
         });
     }
 
-    @Override
-    public void setLevelID(int levelID) {
+    public void setLevel(int levelID, Entity level) {
         this.levelID = levelID;
+        this.level = level;
     }
 
     @Override
@@ -59,9 +67,6 @@ public class World implements Entity, Savable, LevelTracker, Startable {
 
     @Override
     public <T> T getComponent(Class<T> componentType) {
-        if(componentType == LevelTracker.class) {
-            return componentType.cast(this);
-        }
         return null;
     }
 
@@ -79,5 +84,21 @@ public class World implements Entity, Savable, LevelTracker, Startable {
         if(startFunc != null) {
             startFunc.stop(engine);
         }
+    }
+
+    public UpdatingSystem getUpdatingSystem() {
+        return updatingSystem;
+    }
+
+    public CollisionSystem getCollisionSystem() {
+        return collisionSystem;
+    }
+
+    @Override
+    public void update() {
+        updatingSystem.update();
+        collisionSystem.update();
+        //TODO update geometry system
+        //TODO update lighting system which updates shadow system when needed
     }
 }

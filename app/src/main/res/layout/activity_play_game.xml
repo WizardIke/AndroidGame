@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".PlayGameActivity">
-    <wizardike.assignment3.graphics.GraphicsSystem
+    <wizardike.assignment3.graphics.GraphicsManager
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

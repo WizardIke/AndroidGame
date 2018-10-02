@@ -56,11 +56,11 @@ public class Player implements Entity, Startable, Savable {
 
     @Override
     public void start(Engine engine) {
-        engine.getGraphicsSystem().addPointLight(light);
+        engine.getGraphicsManager().addPointLight(light);
     }
 
     @Override
     public void stop(Engine engine) {
-        engine.getGraphicsSystem().removePointLight(light);
+        engine.getGraphicsManager().removePointLight(light);
     }
 }

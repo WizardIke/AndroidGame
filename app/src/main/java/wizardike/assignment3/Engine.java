@@ -2,7 +2,6 @@ package wizardike.assignment3;
 
 import android.app.Activity;
 import android.net.Uri;
-import android.util.Log;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,31 +12,23 @@ import java.io.FileOutputStream;
 import wizardike.assignment3.entities.Entity;
 import wizardike.assignment3.entities.EntityGenerator;
 import wizardike.assignment3.entities.EntityLoader;
-import wizardike.assignment3.graphics.GraphicsSystem;
-import wizardike.assignment3.physics.PhysicsSystem;
-import wizardike.assignment3.updating.UpdatingSystem;
+import wizardike.assignment3.entities.World;
+import wizardike.assignment3.graphics.GraphicsManager;
 
 public class Engine {
-    private static final String TAG = "Engine";
     private static final int MAX_AUDIO_STREAMS = 16;
 
     private PlayGameRequest playGameRequest;
-    private GraphicsSystem graphicsSystem;
-    private UpdatingSystem updatingSystem;
-    private PhysicsSystem physicsSystem;
+    private GraphicsManager graphicsSystem;
     private AudioManager audioManager;
     private WorkerThread workerThread = new WorkerThread();
     private EntityStreamingManager entityStreamingManager;
+
     private LoadingScreen loadingScreen;
-    private int worldId;
-    private Entity world = null;
+    private World world = null;
 
     public Engine(Activity context, PlayGameRequest playGameRequest) {
-        graphicsSystem = new GraphicsSystem(context);
-        updatingSystem = new UpdatingSystem(this);
-        graphicsSystem.addUpdateListener(updatingSystem);
-        physicsSystem = new PhysicsSystem(this);
-        graphicsSystem.addUpdateListener(physicsSystem);
+        graphicsSystem = new GraphicsManager(context);
         audioManager = new AudioManager(context, MAX_AUDIO_STREAMS);
         workerThread.start();
         entityStreamingManager = new EntityStreamingManager(this);
@@ -64,7 +55,7 @@ public class Engine {
                             loadWorld(playGameRequest.saveFile, new EntityLoader.EntityLoadedCallback() {
                                 @Override
                                 public void onLoadComplete(Entity entity) {
-                                    world = entity;
+                                    world = (World)entity;
                                     loadingFinished();
                                 }
                             });
@@ -86,10 +77,7 @@ public class Engine {
                 loadingScreen.stop(Engine.this);
                 loadingScreen = null; //delete loading screen
                 //Start the world updating and displaying
-                Startable worldRunner = world.getComponent(Startable.class);
-                if(worldRunner != null) {
-                    worldRunner.start(Engine.this);
-                }
+                world.start(Engine.this);
             }
         });
     }
@@ -102,10 +90,7 @@ public class Engine {
         try {
             File saveFile = new File(saveFileUri.getPath());
             save = new DataInputStream(new FileInputStream(saveFile));
-
-            worldId = save.readInt();
-            Log.d(TAG, "WorldId: " + worldId);
-            EntityLoader.loadEntity(worldId, save, this, callback);
+            EntityLoader.loadEntity(World.id, save, this, callback);
         } finally {
             if(save != null) {
                 save.close();
@@ -122,10 +107,7 @@ public class Engine {
         DataOutputStream save = null;
         try {
             save = new DataOutputStream(new FileOutputStream(saveFile));
-            Savable saveFunc = world.getComponent(Savable.class);
-            if(saveFunc != null) {
-                saveFunc.save(save);
-            }
+            world.save(save);
         } finally {
             if(save != null) {
                 save.close();
@@ -133,15 +115,7 @@ public class Engine {
         }
     }
 
-    public UpdatingSystem getUpdatingSystem() {
-        return updatingSystem;
-    }
-
-    public PhysicsSystem getPhysicsSystem() {
-        return physicsSystem;
-    }
-
-    public GraphicsSystem getGraphicsSystem() {
+    public GraphicsManager getGraphicsManager() {
         return graphicsSystem;
     }
 
@@ -155,6 +129,10 @@ public class Engine {
 
     public EntityStreamingManager getEntityStreamingManager() {
         return entityStreamingManager;
+    }
+
+    public World getWorld() {
+        return world;
     }
 
     public void resume() {
@@ -177,16 +155,15 @@ public class Engine {
         graphicsSystem.queueEvent(new Runnable() {
             @Override
             public void run() {
+                if(loadingScreen != null) {
+                    loadingScreen.stop(Engine.this);
+                    loadingScreen = null;
+                }
                 if(world != null) {
-                    Startable worldRunner = world.getComponent(Startable.class);
-                    if(worldRunner != null) {
-                        worldRunner.stop(Engine.this);
-                    }
-                    entityStreamingManager.unloadEntity(worldId);
+                    world.stop(Engine.this);
+                    entityStreamingManager.unloadEntity(World.id);
                 }
                 workerThread.interrupt();
-                graphicsSystem.removeUpdateListener(updatingSystem);
-                graphicsSystem.removeUpdateListener(physicsSystem);
                 audioManager.close();
                 playGameRequest.onPlayingEnded(state);
             }

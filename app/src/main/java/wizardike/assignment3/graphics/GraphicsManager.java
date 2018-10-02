@@ -27,7 +27,7 @@ import wizardike.assignment3.R;
 import static java.util.Collections.sort;
 import static wizardike.assignment3.geometry.IntersectionTesting.isIntersecting;
 
-public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Renderer {
+public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Renderer {
     private class EGLContextCreator implements EGLContextFactory {
         private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
         private static final int PREFERRED_GL_VERSION = 3;
@@ -106,12 +106,12 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
     private int transparentSpriteTexCoordinatesHandle;
     private int transparentSpriteCameraScaleAndOffsetHandle;
 
-    public GraphicsSystem(Context context){
+    public GraphicsManager(Context context){
         super(context);
         init();
     }
 
-    public GraphicsSystem(Context context, AttributeSet attrs){
+    public GraphicsManager(Context context, AttributeSet attrs){
         super(context, attrs);
         init();
     }
@@ -199,6 +199,9 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
 
     @Override
     public void onDrawFrame(GL10 unused) {
+        for(UpdateListener updateListener : updateListeners) {
+            updateListener.update();
+        }
         if(openGLVersion >= 30 && Build.VERSION.SDK_INT >= 18) {
             startRendering30();
 
@@ -212,7 +215,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
             //create geometry and add it to the buffer
             int spritesOffset = buffer.position() * 4;
             int numberOfSpritesPending = drawSprites30(sprites, floatBuffer);
-            sortTransparentSprites();
+            sortBackToFront(transparentSprites);
             int transparentSpritesOffset = buffer.position() * 4;
             int transparentNumberOfSpritesPending = drawSprites30(transparentSprites, floatBuffer);
 
@@ -308,7 +311,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
             //create geometry and add it to the buffer
             int spritesOffset = spriteBuffer.position() * 4;
             int numberOfSpritesPending = drawSprites20(sprites, spriteBuffer);
-            sortTransparentSprites();
+            sortBackToFront(transparentSprites);
             int transparentSpritesOffset = spriteBuffer.position() * 4;
             int transparentNumberOfSpritesPending = drawSprites20(transparentSprites, spriteBuffer);
 
@@ -331,7 +334,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
                 GLES30.glDepthFunc(GLES30.GL_GEQUAL);
                 GLES20.glDisable(GLES20.GL_BLEND);
                 submitSprites20(spritesOffset, numberOfSpritesPending,
-                        opaqueSpritePositionHandle, opaqueSpriteTexCoordinatesHandle);
+                        opaqueSpritePositionHandle, opaqueSpriteTexCoordinatesHandle, spriteBuffer);
 
                 GLES20.glDisableVertexAttribArray(opaqueSpritePositionHandle);
                 GLES20.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
@@ -352,7 +355,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
                 GLES20.glDisable(GLES20.GL_BLEND);
                 GLES20.glDepthFunc(GLES20.GL_GEQUAL);
                 submitSprites20(spritesOffset, numberOfSpritesPending, spriteDepthPositionHandle,
-                        spriteDepthTexCoordinatesHandle);
+                        spriteDepthTexCoordinatesHandle, spriteBuffer);
 
                 GLES20.glDisableVertexAttribArray(spriteDepthPositionHandle);
                 GLES20.glDisableVertexAttribArray(spriteDepthTexCoordinatesHandle);
@@ -369,7 +372,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
                 GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
 
                 submitSprites20(spritesOffset, numberOfSpritesPending, opaqueSpritePositionHandle,
-                        opaqueSpriteTexCoordinatesHandle);
+                        opaqueSpriteTexCoordinatesHandle, spriteBuffer);
 
                 GLES20.glDisableVertexAttribArray(opaqueSpritePositionHandle);
                 GLES20.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
@@ -384,7 +387,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
             GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
             GLES20.glEnable(GLES20.GL_BLEND);
             submitSprites20(transparentSpritesOffset, transparentNumberOfSpritesPending,
-                    transparentSpritePositionHandle, transparentSpriteTexCoordinatesHandle);
+                    transparentSpritePositionHandle, transparentSpriteTexCoordinatesHandle, spriteBuffer);
 
             GLES20.glDisableVertexAttribArray(transparentSpritePositionHandle);
             GLES20.glDisableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
@@ -600,7 +603,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
         currentBufferIndex = currentBufferIndex ^ 1;
     }
 
-    private int drawSprites30(List<Sprite> sprites, FloatBuffer buffer) {
+    private static int drawSprites30(List<Sprite> sprites, FloatBuffer buffer) {
         int numberOfSpritesPending = 0;
         for(Sprite sprite : sprites) {
             buffer.put(sprite.positionX);
@@ -616,8 +619,8 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
         return numberOfSpritesPending;
     }
 
-    private void submitSprites20(int offsetInBytes, int spriteCount,
-                                 int spritePositionHandle, int spriteTexCoordinatesHandle) {
+    private static void submitSprites20(int offsetInBytes, int spriteCount, int spritePositionHandle,
+                                 int spriteTexCoordinatesHandle, FloatBuffer spriteBuffer) {
         final int oldPosition = spriteBuffer.position();
         spriteBuffer.position(offsetInBytes / 4);
         GLES20.glVertexAttribPointer(spritePositionHandle, 3,
@@ -632,7 +635,7 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
     }
 
     @TargetApi(18)
-    private void submitSprites30(int offsetInBytes, int spriteCount,
+    private static void submitSprites30(int offsetInBytes, int spriteCount,
                                  int spritePositionHandle, int spriteTexCoordinatesHandle) {
 
         GLES30.glFlushMappedBufferRange(GLES30.GL_ARRAY_BUFFER, offsetInBytes,
@@ -647,8 +650,8 @@ public class GraphicsSystem extends GLSurfaceView implements GLSurfaceView.Rende
         GLES30.glDrawArraysInstanced(GLES30.GL_TRIANGLE_STRIP, 0, 4, spriteCount);
     }
 
-    private void sortTransparentSprites() {
-        sort(transparentSprites, new Comparator<Sprite>() {
+    private static void sortBackToFront(List<Sprite> sprites) {
+        sort(sprites, new Comparator<Sprite>() {
             @Override
             public int compare(Sprite s1, Sprite s2) {
                 final float lowerY1 = s1.positionY + s1.height;

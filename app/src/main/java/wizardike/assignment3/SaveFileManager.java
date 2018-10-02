@@ -17,7 +17,6 @@ public class SaveFileManager {
     public static void createSave(Uri saveFileUri) throws IOException {
         File saveFile = new File(saveFileUri.getPath());
         DataOutputStream save = new DataOutputStream(new FileOutputStream(saveFile));
-        save.writeInt(World.id); //version of world to use
         save.writeInt(SurfaceLevel.id); //version of starting level to use
         save.writeInt(1); //number of levels in save
         save.writeInt(SurfaceLevel.saveLength()); //length of level data

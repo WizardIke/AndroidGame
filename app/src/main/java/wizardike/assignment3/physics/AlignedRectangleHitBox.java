@@ -21,17 +21,17 @@ public class AlignedRectangleHitBox extends AlignedRectangle implements Collidab
 
     @Override
     public void collide(Engine world, CircleHitBox other) {
-        PhysicsSystem.collide(world, other, this);
+        CollisionSystem.collide(world, other, this);
     }
 
     @Override
     public void collide(Engine world, AlignedRectangleHitBox other) {
-        PhysicsSystem.collide(world, other, this);
+        CollisionSystem.collide(world, other, this);
     }
 
     @Override
     public void collide(Engine world, TriggeredCircleHitBox other) {
-        PhysicsSystem.collide(world, other, this);
+        CollisionSystem.collide(world, other, this);
     }
 
     @Override

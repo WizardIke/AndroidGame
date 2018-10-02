@@ -1,4 +1,4 @@
-package wizardike.assignment3.updating;
+package wizardike.assignment3;
 
 import wizardike.assignment3.Engine;
 

@@ -21,17 +21,17 @@ public class CircleHitBox extends Circle implements Collidable {
 
     @Override
     public void collide(Engine world, CircleHitBox other) {
-        PhysicsSystem.collide(world, other, this);
+        CollisionSystem.collide(world, other, this);
     }
 
     @Override
     public void collide(Engine world, AlignedRectangleHitBox other) {
-        PhysicsSystem.collide(world, this, other);
+        CollisionSystem.collide(world, this, other);
     }
 
     @Override
     public void collide(Engine world, TriggeredCircleHitBox other) {
-        PhysicsSystem.collide(world, other, this);
+        CollisionSystem.collide(world, other, this);
     }
 
     @Override
