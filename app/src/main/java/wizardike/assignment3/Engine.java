@@ -11,6 +11,9 @@ import java.io.FileOutputStream;
 
 import wizardike.assignment3.entities.EntityAllocator;
 import wizardike.assignment3.graphics.GraphicsManager;
+import wizardike.assignment3.worlds.MainWorld;
+import wizardike.assignment3.worlds.World;
+import wizardike.assignment3.worlds.WorldLoader;
 
 public class Engine {
     private static final int MAX_AUDIO_STREAMS = 16;
@@ -22,6 +25,7 @@ public class Engine {
     private EntityAllocator entityAllocator = new EntityAllocator();
 
     private LoadingScreen loadingScreen = null;
+    private MainWorld mainWorld;
 
     public Engine(Activity context, PlayGameRequest playGameRequest) {
         graphicsManager = new GraphicsManager(context);
@@ -49,9 +53,11 @@ public class Engine {
                     @Override
                     public void run() {
                         try {
-                            loadWorlds(playGameRequest.saveFile, new GraphicsManager.Callback() {
+                            loadWorld(playGameRequest.saveFile, new WorldLoader.Callback() {
                                 @Override
-                                public void onLoadComplete(GraphicsManager graphicsManager) { //will be called on the graphics thread
+                                public void onLoadComplete(World mainWorld) { //will be called on the graphics thread
+                                    Engine.this.mainWorld = (MainWorld)mainWorld;
+                                    graphicsManager.addWorld(mainWorld);
                                     loadingFinished();
                                 }
                             });
@@ -74,12 +80,12 @@ public class Engine {
     /**
      * Loads a saved game world from a file
      */
-    private void loadWorlds(Uri saveFileUri, GraphicsManager.Callback callback) throws Exception {
+    private void loadWorld(Uri saveFileUri, WorldLoader.Callback callback) throws Exception {
         DataInputStream save = null;
         try {
             File saveFile = new File(saveFileUri.getPath());
             save = new DataInputStream(new FileInputStream(saveFile));
-            graphicsManager.loadWorlds(save, callback);
+            new MainWorld(save, this, callback);
         } finally {
             if(save != null) {
                 save.close();
@@ -96,7 +102,7 @@ public class Engine {
         DataOutputStream save = null;
         try {
             save = new DataOutputStream(new FileOutputStream(saveFile));
-            graphicsManager.saveWorlds(save);
+            mainWorld.save(save);
         } finally {
             if(save != null) {
                 save.close();
@@ -140,7 +146,10 @@ public class Engine {
                     loadingScreen.stop(Engine.this);
                     loadingScreen = null;
                 }
-                graphicsManager.removeAllWorlds();
+                if(mainWorld != null) {
+                    graphicsManager.removeWorld(mainWorld);
+                    mainWorld = null;
+                }
                 workerThread.interrupt();
                 audioManager.close();
                 playGameRequest.onPlayingEnded(state);

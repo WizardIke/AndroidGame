@@ -1,6 +1,6 @@
 package wizardike.assignment3;
 
-public class LoadingScreen implements Startable {
+public class LoadingScreen {
 
     public interface Callback {
         void onLoadComplete(LoadingScreen loadingScreen);
@@ -10,12 +10,10 @@ public class LoadingScreen implements Startable {
         callback.onLoadComplete(this);
     }
 
-    @Override
     public void start(Engine engine) {
 
     }
 
-    @Override
     public void stop(Engine engine) {
 
     }

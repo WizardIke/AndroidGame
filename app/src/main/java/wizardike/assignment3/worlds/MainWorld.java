@@ -26,7 +26,7 @@ public class MainWorld implements World {
         });
     }
 
-    private MainWorld(DataInputStream save, final Engine engine,
+    public MainWorld(DataInputStream save, final Engine engine,
                       final WorldLoader.Callback callback) throws IOException {
         final int saveState = save.readInt();
         levelId = save.readInt();

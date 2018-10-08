@@ -151,7 +151,7 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
             }
         }
 
-        textureManager = new TextureManager(1024);
+        textureManager = new TextureManager(engine);
     }
 
     @Override

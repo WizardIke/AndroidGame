@@ -1,11 +1,62 @@
 package wizardike.assignment3.graphics;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
+import android.util.SparseArray;
 
-public class TextureManager {
+import java.io.Closeable;
+
+import wizardike.assignment3.Engine;
+import wizardike.assignment3.geometry.Vector4;
+
+public class TextureManager implements Closeable{
+    public static abstract class Request {
+        Request next;
+
+        protected abstract void onLoadComplete(Vector4 textureCoordinates);
+    }
+
+    private static final class Descriptor {
+        final Vector4 textureCoordinates;
+        int referenceCount;
+        Request requests;
+
+        Descriptor(Vector4 textureCoordinates, Request request) {
+            this.textureCoordinates = textureCoordinates;
+            referenceCount = 1;
+            request.next = null;
+            requests = request;
+        }
+
+        void addRequest(Request request) {
+            request.next = requests;
+            requests = request;
+        }
+
+        boolean isLoaded() {
+            return requests == null;
+        }
+
+        public void onLoadComplete() {
+            while(requests != null) {
+                requests.onLoadComplete(textureCoordinates);
+                requests = requests.next;
+            }
+        }
+    }
+
     private int textureHandle;
+    private SparseArray<Descriptor> descriptors = new SparseArray<>();
+    private TextureSubAllocator textureSubAllocator = new TextureSubAllocator(4, 4);
+    private Engine engine;
+    private int textureSize;
 
-    TextureManager(int textureSize) {
+    TextureManager(Engine engine) {
+        this.engine = engine;
+        textureSize = 1024;
+
         int[] temp = new int[1];
         GLES20.glGenTextures(1, temp, 0);
         textureHandle = temp[0];
@@ -19,7 +70,69 @@ public class TextureManager {
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
     }
 
-    public int getTextureHandle() {
+    int getTextureHandle() {
         return textureHandle;
+    }
+
+    public synchronized void loadTexture(int textureId, Request request) {
+        int index = descriptors.indexOfKey(textureId);
+        if(index >= 0) {
+            Descriptor descriptor = descriptors.valueAt(index);
+            descriptor.referenceCount += 1;
+            if(descriptor.isLoaded()) {
+                Vector4 textureCoordinates = descriptor.textureCoordinates;
+                request.onLoadComplete(textureCoordinates);
+            } else {
+                descriptor.addRequest(request);
+            }
+        } else {
+            Vector4 textureCoordinates = textureSubAllocator.allocate();
+            Descriptor descriptor = new Descriptor(textureCoordinates, request);
+            descriptors.put(textureId, descriptor);
+            loadUniqueRequest(textureId, textureCoordinates);
+        }
+    }
+
+    public synchronized void unloadTexture(int textureId) {
+        final int index = descriptors.indexOfKey(textureId);
+        final Descriptor descriptor = descriptors.valueAt(index);
+        descriptor.referenceCount -= 1;
+        if(descriptor.referenceCount == 0){
+            final Vector4 textureCoordinates = descriptor.textureCoordinates;
+            textureSubAllocator.deallocate(textureCoordinates);
+            descriptors.removeAt(index);
+        }
+    }
+
+    private void loadUniqueRequest(final int textureId, final Vector4 textureCoordinates) {
+        engine.getWorkerThread().addTask(new Runnable() {
+            @Override
+            public void run() {
+                final Bitmap bitmap = BitmapFactory.decodeResource(
+                        engine.getGraphicsManager().getResources(),
+                        textureId
+                );
+                engine.getGraphicsManager().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO scale texture
+                        int offsetX = (int)((textureCoordinates.getX() + 1.0f) * 0.5f * textureSize);
+                        int offsetY = (int)((textureCoordinates.getY() + 1.0f) * 0.5f * textureSize);
+                        GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, bitmap);
+                        synchronized (TextureManager.this) {
+                            Descriptor descriptor = descriptors.get(textureId);
+                            descriptor.onLoadComplete();
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public void close() {
+        int[] temp = new int[1];
+        temp[0] = textureHandle;
+        GLES20.glDeleteTextures(1, temp, 0);
     }
 }

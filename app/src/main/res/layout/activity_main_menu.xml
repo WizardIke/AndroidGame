@@ -17,7 +17,10 @@
         app:layout_constraintTop_toTopOf="parent" />
     <Button
         android:id="@+id/start_button"
+        android:text="New Game"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="sample_text"
+        />
 
 </android.support.constraint.ConstraintLayout>
