@@ -1,45 +1,70 @@
 package wizardike.assignment3.physics;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 import wizardike.assignment3.geometry.Circle;
-import wizardike.assignment3.entities.Entity;
-import wizardike.assignment3.Engine;
+import wizardike.assignment3.levels.Level;
 
 public class CircleHitBox extends Circle implements Collidable {
-    private Entity mOwner;
+    private static final int id = 1;
+
     private float mMass;
 
-    public CircleHitBox(float x, float y, float radius, float mass, Entity owner) {
+    static void registerLoader() {
+        CollidableLoader.addLoader(id, new CollidableLoader.Loader() {
+            @Override
+            public Collidable load(DataInputStream save) throws IOException {
+                return new CircleHitBox(save);
+            }
+        });
+    }
+
+    public CircleHitBox(float x, float y, float radius, float mass) {
         super(x, y, radius);
-        mOwner = owner;
         mMass = mass;
     }
 
-    @Override
-    public void collide(Engine world, Collidable other) {
-        other.collide(world, this);
+    private CircleHitBox(DataInputStream save) throws IOException {
+        super(save.readFloat(), save.readFloat(), save.readFloat());
+        mMass = save.readFloat();
     }
 
     @Override
-    public void collide(Engine world, CircleHitBox other) {
-        CollisionSystem.collide(world, other, this);
+    public void collide(Level level, int thisEntity, Collidable other, int otherEntity) {
+        other.collide(level, thisEntity, this, otherEntity);
     }
 
     @Override
-    public void collide(Engine world, AlignedRectangleHitBox other) {
-        CollisionSystem.collide(world, this, other);
+    public void collide(Level level, int thisEntity, CircleHitBox other, int otherEntity) {
+        CollisionSystem.collide(other, this);
     }
 
     @Override
-    public void collide(Engine world, TriggeredCircleHitBox other) {
-        CollisionSystem.collide(world, other, this);
+    public void collide(Level level, int thisEntity, AlignedRectangleHitBox other, int otherEntity) {
+        CollisionSystem.collide(this, other);
     }
 
     @Override
-    public Entity getOwningEntity() {
-        return mOwner;
+    public void collide(Level level, int thisEntity, TriggeredCircleHitBox other, int otherEntity) {
+        CollisionSystem.collide(level, other, otherEntity, this, thisEntity);
+    }
+
+    @Override
+    public void save(DataOutputStream save) throws IOException {
+        save.writeFloat(getX());
+        save.writeFloat(getY());
+        save.writeFloat(getRadius());
+        save.writeFloat(mMass);
     }
 
     public float getMass() {
         return mMass;
+    }
+
+    @Override
+    public int getId() {
+        return id;
     }
 }

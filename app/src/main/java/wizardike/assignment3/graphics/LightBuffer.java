@@ -419,6 +419,7 @@ public class LightBuffer {
     }
 
     public void renderLineShadow(LineShadowCaster shadowCaster, PointLight light) {
+        //TODO back face culling
         addShadowGeometry(shadowCaster.startX, shadowCaster.startY, shadowCaster.endX,
                 shadowCaster.endY, shadowCaster.height, light.positionX, light.positionY,
                 light.positionZ, light.radius, shadowCaster.ambientLightMultiplier);

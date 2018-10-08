@@ -25,7 +25,7 @@ public class AlignedRectangle {
         return mSize.getX();
     }
 
-    public float getHight() {
+    public float getHeight() {
         return mSize.getY();
     }
 }

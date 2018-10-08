@@ -8,13 +8,9 @@ import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.util.AttributeSet;
 
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -22,10 +18,9 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
-import wizardike.assignment3.R;
-
-import static java.util.Collections.sort;
-import static wizardike.assignment3.geometry.IntersectionTesting.isIntersecting;
+import wizardike.assignment3.Engine;
+import wizardike.assignment3.worlds.World;
+import wizardike.assignment3.worlds.WorldUpdatingSystem;
 
 public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Renderer {
     private class EGLContextCreator implements EGLContextFactory {
@@ -69,42 +64,20 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
             egl10.eglDestroyContext(eglDisplay, eglContext);
         }
     }
+
     private static final float MIN_VIEW_PORT_LENGTH_IN_METERS = 7.0f;
-    private static final int SPRITE_BATCH_SIZE = 128;
-    private static final int SPRITE_SIZE_IN_BYTES30 = 8 * 4;
-    private static final int SPRITE_SIZE_IN_BYTES20 = 30 * 4;
-    private final ArrayList<UpdateListener> updateListeners = new ArrayList<>();
-    private final ArrayList<Sprite> sprites = new ArrayList<>();
-    private final ArrayList<Sprite> transparentSprites = new ArrayList<>();
-    private final ArrayList<PointLight> pointLights = new ArrayList<>();
-    private final ArrayList<CircleShadowCaster> circleShadowCasters = new ArrayList<>();
-    private final ArrayList<LineShadowCaster> lineShadowCasters = new ArrayList<>();
+
+    private Engine engine;
+    private WorldUpdatingSystem worldUpdatingSystem = new WorldUpdatingSystem();
     private Camera camera = new Camera();
     private GeometryBuffer geometryBuffer = null;
     private LightBuffer lightBuffer = null;
-    private TextureManager textureManager = new TextureManager(1024);
-    private FloatBuffer spriteBuffer;
-    private int[] spriteBufferHandles;
+    private TextureManager textureManager;
     private long[] frameSyncObjects;
     private int currentBufferIndex;
     private int openGLVersion;
     private int depthRenderBufferHandle;
     private int depthTextureHandle = -1;
-
-    private int spriteDepthProgram;
-    private int spriteDepthCameraScaleAndOffsetHandle;
-    private int spriteDepthPositionHandle;
-    private int spriteDepthTexCoordinatesHandle;
-
-    private int opaqueSpriteProgram;
-    private int opaqueSpritePositionHandle;
-    private int opaqueSpriteTexCoordinatesHandle;
-    private int opaqueSpriteCameraScaleAndOffsetHandle;
-
-    private int transparentSpriteProgram;
-    private int transparentSpritePositionHandle;
-    private int transparentSpriteTexCoordinatesHandle;
-    private int transparentSpriteCameraScaleAndOffsetHandle;
 
     public GraphicsManager(Context context){
         super(context);
@@ -119,8 +92,42 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
     private void init() {
         // Create an OpenGL ES 3.1 or 2.0 context
         setEGLContextFactory(new EGLContextCreator());
+        //TODO make sure the default framebuffer doesn't have a depth buffer
+
         // Set the Renderer for drawing on the GLSurfaceView
         setRenderer(this);
+    }
+
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
+
+    public int getOpenGlVersion() {
+        return openGLVersion;
+    }
+
+    public GeometryBuffer getGeometryBuffer() {
+        return geometryBuffer;
+    }
+
+    public int getCurrentBufferIndex() {
+        return currentBufferIndex;
+    }
+
+    public TextureManager getTextureManager() {
+        return textureManager;
+    }
+
+    public boolean isDepthTextureSupported() {
+        return depthRenderBufferHandle == -2;
+    }
+
+    public Camera getCamera() {
+        return camera;
+    }
+
+    public LightBuffer getLightBuffer() {
+        return lightBuffer;
     }
 
     @Override
@@ -129,285 +136,32 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GLES20.glClearDepthf(0.0f);
 
-        String sprite_vertex_source;
         if(openGLVersion >= 30 && Build.VERSION.SDK_INT >= 18) {
-            spriteBufferHandles = new int[2]; //increasing this to 3 buffers might increase performance at the cost of latency and memory
             frameSyncObjects = new long[2];
             frameSyncObjects[0] = -1;
             frameSyncObjects[1] = -1;
             currentBufferIndex = 0;
-
-            GLES30.glGenBuffers(2, spriteBufferHandles, 0);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, spriteBufferHandles[0]);
-            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, SPRITE_BATCH_SIZE * SPRITE_SIZE_IN_BYTES30, null,
-                    GLES20.GL_DYNAMIC_DRAW);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, spriteBufferHandles[1]);
-            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, SPRITE_BATCH_SIZE * SPRITE_SIZE_IN_BYTES30, null,
-                    GLES20.GL_DYNAMIC_DRAW);
-
-            sprite_vertex_source = ShaderLoader.loadStringFromRawResource(getResources(), R.raw.geometry_v30);
-        } else {
-            spriteBuffer = ByteBuffer.allocateDirect(SPRITE_BATCH_SIZE * SPRITE_SIZE_IN_BYTES20)
-                    .order(ByteOrder.nativeOrder())
-                    .asFloatBuffer();
-
-            sprite_vertex_source = ShaderLoader.loadStringFromRawResource(getResources(), R.raw.geometry_v20);
         }
-        int sprite_vertex_shader = ShaderLoader.loadShader(GLES20.GL_VERTEX_SHADER, sprite_vertex_source);
-        String sprite_opaque_frag_source = ShaderLoader.loadStringFromRawResource(getResources(), R.raw.sprite_opaque_geometry_f);
-        int sprite_opaque_frag_shader = ShaderLoader.loadShader(GLES20.GL_FRAGMENT_SHADER, sprite_opaque_frag_source);
-        String sprite_transparent_frag_source = ShaderLoader.loadStringFromRawResource(getResources(), R.raw.sprite_transparent_geometry_f);
-        int sprite_transparent_frag_shader = ShaderLoader.loadShader(GLES20.GL_FRAGMENT_SHADER, sprite_transparent_frag_source);
 
         depthRenderBufferHandle = -2;
         if(openGLVersion <= 20) {
             String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
             if(!extensions.contains("OES_depth_texture")) {
                 depthRenderBufferHandle = -1; //set depth textures as not supported
-
-                final int sprite_depth_frag_shader = ShaderLoader.loadShaderFromResource(getResources(),
-                        R.raw.sprite_depth_f, GLES20.GL_FRAGMENT_SHADER);
-                spriteDepthProgram = GLES20.glCreateProgram();
-                GLES20.glAttachShader(spriteDepthProgram, sprite_vertex_shader);
-                GLES20.glAttachShader(spriteDepthProgram, sprite_depth_frag_shader);
-                GLES20.glLinkProgram(spriteDepthProgram);
-
-                spriteDepthPositionHandle = GLES20.glGetAttribLocation(spriteDepthProgram, "position");
-                spriteDepthTexCoordinatesHandle = GLES20.glGetAttribLocation(spriteDepthProgram, "texCoordinates");
-                spriteDepthCameraScaleAndOffsetHandle = GLES20.glGetUniformLocation(spriteDepthProgram, "scaleAndOffset");
             }
         }
 
-        opaqueSpriteProgram = GLES20.glCreateProgram();
-        GLES20.glAttachShader(opaqueSpriteProgram, sprite_vertex_shader);
-        GLES20.glAttachShader(opaqueSpriteProgram, sprite_opaque_frag_shader);
-        GLES20.glLinkProgram(opaqueSpriteProgram);
-
-        transparentSpriteProgram = GLES20.glCreateProgram();
-        GLES20.glAttachShader(transparentSpriteProgram, sprite_vertex_shader);
-        GLES20.glAttachShader(transparentSpriteProgram, sprite_transparent_frag_shader);
-        GLES20.glLinkProgram(transparentSpriteProgram);
-
-        opaqueSpritePositionHandle = GLES20.glGetAttribLocation(opaqueSpriteProgram, "position");
-        opaqueSpriteTexCoordinatesHandle = GLES20.glGetAttribLocation(opaqueSpriteProgram, "texCoordinates");
-        opaqueSpriteCameraScaleAndOffsetHandle = GLES20.glGetUniformLocation(opaqueSpriteProgram, "scaleAndOffset");
-
-        transparentSpritePositionHandle = GLES20.glGetAttribLocation(transparentSpriteProgram, "position");
-        transparentSpriteTexCoordinatesHandle = GLES20.glGetAttribLocation(transparentSpriteProgram, "texCoordinates");
-        transparentSpriteCameraScaleAndOffsetHandle = GLES20.glGetUniformLocation(transparentSpriteProgram, "scaleAndOffset");
+        textureManager = new TextureManager(1024);
     }
 
     @Override
     public void onDrawFrame(GL10 unused) {
-        for(UpdateListener updateListener : updateListeners) {
-            updateListener.update();
-        }
         if(openGLVersion >= 30 && Build.VERSION.SDK_INT >= 18) {
             startRendering30();
-
-            GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, spriteBufferHandles[currentBufferIndex]);
-            final int flags = GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_FLUSH_EXPLICIT_BIT
-                    | GLES30.GL_MAP_UNSYNCHRONIZED_BIT;
-            Buffer buffer = GLES30.glMapBufferRange(GLES30.GL_ARRAY_BUFFER, 0,
-                    SPRITE_BATCH_SIZE * SPRITE_SIZE_IN_BYTES30, flags);
-            FloatBuffer floatBuffer = ((ByteBuffer)buffer).asFloatBuffer();
-
-            //create geometry and add it to the buffer
-            int spritesOffset = buffer.position() * 4;
-            int numberOfSpritesPending = drawSprites30(sprites, floatBuffer);
-            sortBackToFront(transparentSprites);
-            int transparentSpritesOffset = buffer.position() * 4;
-            int transparentNumberOfSpritesPending = drawSprites30(transparentSprites, floatBuffer);
-
-            GLES30.glUnmapBuffer(GLES30.GL_ARRAY_BUFFER);
-
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureManager.getTextureHandle());
-            if(depthRenderBufferHandle == -2) { //depth texture is supported
-                geometryBuffer.bindColorPass();
-                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
-                GLES30.glUseProgram(opaqueSpriteProgram);
-                GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                        -camera.positionX, -camera.positionY);
-                GLES30.glEnableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES30.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-                GLES30.glVertexAttribDivisor(opaqueSpritePositionHandle, 1);
-                GLES30.glVertexAttribDivisor(opaqueSpriteTexCoordinatesHandle, 1);
-
-                GLES30.glDepthMask(true);
-                GLES30.glEnable(GLES30.GL_DEPTH_TEST);
-                GLES30.glDisable(GLES20.GL_BLEND);
-                GLES30.glDepthFunc(GLES30.GL_GEQUAL);
-                submitSprites30(spritesOffset, numberOfSpritesPending, opaqueSpritePositionHandle,
-                        opaqueSpriteTexCoordinatesHandle);
-
-                GLES30.glDisableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES30.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-
-                GLES30.glDepthMask(false);
-            } else {
-                geometryBuffer.bindDepthPass();
-                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
-                GLES30.glUseProgram(spriteDepthProgram);
-                GLES20.glUniform4f(spriteDepthCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                        -camera.positionX, -camera.positionY);
-                GLES30.glEnableVertexAttribArray(spriteDepthPositionHandle);
-                GLES30.glEnableVertexAttribArray(spriteDepthTexCoordinatesHandle);
-                GLES30.glVertexAttribDivisor(spriteDepthPositionHandle, 1);
-                GLES30.glVertexAttribDivisor(spriteDepthTexCoordinatesHandle, 1);
-
-                GLES30.glDepthMask(true);
-                GLES30.glEnable(GLES30.GL_DEPTH_TEST);
-                GLES30.glDisable(GLES20.GL_BLEND);
-                GLES30.glDepthFunc(GLES30.GL_GEQUAL);
-                submitSprites30(spritesOffset, numberOfSpritesPending, spriteDepthPositionHandle,
-                        spriteDepthTexCoordinatesHandle);
-
-                GLES30.glDisableVertexAttribArray(spriteDepthPositionHandle);
-                GLES30.glDisableVertexAttribArray(spriteDepthTexCoordinatesHandle);
-
-
-                geometryBuffer.bindColorPass();
-                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
-                GLES30.glDepthMask(false);
-                GLES30.glUseProgram(opaqueSpriteProgram);
-                GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                        -camera.positionX, -camera.positionY);
-                GLES30.glEnableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES30.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-                GLES30.glVertexAttribDivisor(opaqueSpritePositionHandle, 1);
-                GLES30.glVertexAttribDivisor(opaqueSpriteTexCoordinatesHandle, 1);
-
-                submitSprites30(spritesOffset, numberOfSpritesPending, opaqueSpritePositionHandle,
-                        opaqueSpriteTexCoordinatesHandle);
-
-                GLES30.glDisableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES30.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-            }
-
-            GLES30.glUseProgram(transparentSpriteProgram);
-            //set camera constants on gpu
-            GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                    -camera.positionX, -camera.positionY);
-            GLES30.glEnableVertexAttribArray(transparentSpritePositionHandle);
-            GLES30.glEnableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
-            GLES30.glVertexAttribDivisor(transparentSpritePositionHandle, 1);
-            GLES30.glVertexAttribDivisor(transparentSpriteTexCoordinatesHandle, 1);
-
-            GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
-            GLES20.glBlendEquation(GLES20.GL_FUNC_ADD);
-            GLES30.glEnable(GLES30.GL_BLEND);
-            submitSprites30(transparentSpritesOffset, transparentNumberOfSpritesPending,
-                    transparentSpritePositionHandle, transparentSpriteTexCoordinatesHandle);
-
-            GLES30.glDisableVertexAttribArray(transparentSpritePositionHandle);
-            GLES30.glDisableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
-
+            worldUpdatingSystem.update(engine);
             endRendering30();
         } else {
-            //create geometry and add it to the buffer
-            int spritesOffset = spriteBuffer.position() * 4;
-            int numberOfSpritesPending = drawSprites20(sprites, spriteBuffer);
-            sortBackToFront(transparentSprites);
-            int transparentSpritesOffset = spriteBuffer.position() * 4;
-            int transparentNumberOfSpritesPending = drawSprites20(transparentSprites, spriteBuffer);
-
-
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureManager.getTextureHandle());
-            if(depthRenderBufferHandle == -2) { //depth texture is supported
-                geometryBuffer.bindColorPass();
-                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
-                GLES20.glUseProgram(opaqueSpriteProgram);
-                //set camera constants on gpu
-                GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                        -camera.positionX, -camera.positionY);
-                GLES20.glEnableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-
-                GLES20.glDepthMask(true);
-                GLES20.glEnable(GLES30.GL_DEPTH_TEST);
-                GLES30.glDepthFunc(GLES30.GL_GEQUAL);
-                GLES20.glDisable(GLES20.GL_BLEND);
-                submitSprites20(spritesOffset, numberOfSpritesPending,
-                        opaqueSpritePositionHandle, opaqueSpriteTexCoordinatesHandle, spriteBuffer);
-
-                GLES20.glDisableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES20.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-
-                GLES20.glDepthMask(false);
-            } else {
-                geometryBuffer.bindDepthPass();
-                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
-                GLES20.glUseProgram(spriteDepthProgram);
-                GLES20.glUniform4f(spriteDepthCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                        -camera.positionX, -camera.positionY);
-                GLES20.glEnableVertexAttribArray(spriteDepthPositionHandle);
-                GLES20.glEnableVertexAttribArray(spriteDepthTexCoordinatesHandle);
-
-                GLES20.glDepthMask(true);
-                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-                GLES20.glDisable(GLES20.GL_BLEND);
-                GLES20.glDepthFunc(GLES20.GL_GEQUAL);
-                submitSprites20(spritesOffset, numberOfSpritesPending, spriteDepthPositionHandle,
-                        spriteDepthTexCoordinatesHandle, spriteBuffer);
-
-                GLES20.glDisableVertexAttribArray(spriteDepthPositionHandle);
-                GLES20.glDisableVertexAttribArray(spriteDepthTexCoordinatesHandle);
-
-
-                geometryBuffer.bindColorPass();
-                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
-                GLES20.glDepthMask(false);
-                GLES20.glUseProgram(opaqueSpriteProgram);
-                GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                        -camera.positionX, -camera.positionY);
-                GLES20.glEnableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-
-                submitSprites20(spritesOffset, numberOfSpritesPending, opaqueSpritePositionHandle,
-                        opaqueSpriteTexCoordinatesHandle, spriteBuffer);
-
-                GLES20.glDisableVertexAttribArray(opaqueSpritePositionHandle);
-                GLES20.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
-            }
-
-            GLES30.glUseProgram(transparentSpriteProgram);
-            //set camera constants on gpu
-            GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                    -camera.positionX, -camera.positionY);
-            GLES20.glEnableVertexAttribArray(transparentSpritePositionHandle);
-            GLES20.glEnableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
-            GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-            GLES20.glEnable(GLES20.GL_BLEND);
-            submitSprites20(transparentSpritesOffset, transparentNumberOfSpritesPending,
-                    transparentSpritePositionHandle, transparentSpriteTexCoordinatesHandle, spriteBuffer);
-
-            GLES20.glDisableVertexAttribArray(transparentSpritePositionHandle);
-            GLES20.glDisableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
-        }
-
-        final float viewPortHalfWidth = 1 / camera.scaleX;
-        final float viewPortHalfHeight = 1 / camera.scaleY;
-        lightBuffer.prepareToRenderLights();
-        for(PointLight light : pointLights) {
-            if(isIntersecting(light.positionX, light.positionY, light.radius,
-                    camera.positionX, camera.positionY, viewPortHalfWidth, viewPortHalfHeight)) {
-                lightBuffer.renderLight(light, camera);
-                for(CircleShadowCaster shadowCaster : circleShadowCasters) {
-                    lightBuffer.renderCircleShadow(shadowCaster, light);
-                }
-                for(LineShadowCaster shadowCaster : lineShadowCasters) {
-                    lightBuffer.renderLineShadow(shadowCaster, light);
-                }
-                lightBuffer.applyLighting(geometryBuffer.getColorTextureHandle(), light, camera);
-            }
+            worldUpdatingSystem.update(engine);
         }
     }
 
@@ -460,7 +214,8 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
         }
 
         if(geometryBuffer == null) {
-            geometryBuffer = new GeometryBuffer(width, height, depthTextureHandle, depthRenderBufferHandle);
+            geometryBuffer = new GeometryBuffer(width, height, depthTextureHandle,
+                    depthRenderBufferHandle, openGLVersion, getResources());
         } else {
             geometryBuffer.resize(width, height);
         }
@@ -472,113 +227,43 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
         }
     }
 
-    public void addSprite(Sprite sprite) {
-        sprites.add(sprite);
+    public void addWorld(World world) {
+        worldUpdatingSystem.addWorld(world);
     }
 
-    public void removeSprite(Sprite sprite) {
-        int index = sprites.indexOf(sprite);
-        sprites.set(index, sprites.get(sprites.size() - 1));
-        sprites.remove(sprites.size() - 1);
+    public void removeWorld(World world) {
+        worldUpdatingSystem.removeWorld(world);
     }
 
-    public void addTransparentSprite(Sprite sprite) {
-        transparentSprites.add(sprite);
+    public interface Callback {
+        void onLoadComplete(GraphicsManager graphicsManager);
     }
 
-    public void removeTransparentSprite(Sprite sprite) {
-        int index = transparentSprites.indexOf(sprite);
-        transparentSprites.set(index, transparentSprites.get(transparentSprites.size() - 1));
-        transparentSprites.remove(transparentSprites.size() - 1);
+    public void loadWorlds(DataInputStream save, final Callback callback) throws IOException {
+        new WorldUpdatingSystem(save, engine, new WorldUpdatingSystem.Callback() {
+            @Override
+            public void onLoadComplete(final WorldUpdatingSystem worldUpdatingSystem) {
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        for(World world : GraphicsManager.this.worldUpdatingSystem.getWorlds()) {
+                            worldUpdatingSystem.addWorld(world);
+                        }
+                        GraphicsManager.this.worldUpdatingSystem = worldUpdatingSystem;
+                        callback.onLoadComplete(GraphicsManager.this);
+
+                    }
+                });
+            }
+        });
     }
 
-    public void addPointLight(PointLight light) {
-        pointLights.add(light);
+    public void saveWorlds(DataOutputStream save) throws IOException {
+        worldUpdatingSystem.save(save);
     }
 
-    public void removePointLight(PointLight light) {
-        int index = pointLights.indexOf(light);
-        pointLights.set(index, pointLights.get(pointLights.size() - 1));
-        pointLights.remove(pointLights.size() - 1);
-    }
-
-    public void addCircleShadowCaster(CircleShadowCaster circleShadowCaster) {
-        circleShadowCasters.add(circleShadowCaster);
-    }
-
-    public void removeCircleShadowCaster(CircleShadowCaster circleShadowCaster) {
-        int index = circleShadowCasters.indexOf(circleShadowCaster);
-        circleShadowCasters.set(index, circleShadowCasters.get(circleShadowCasters.size() - 1));
-        circleShadowCasters.remove(circleShadowCasters.size() - 1);
-    }
-
-    public void addLineShadowCaster(LineShadowCaster lineShadowCaster) {
-        lineShadowCasters.add(lineShadowCaster);
-    }
-
-    public void removeLineShadowCaster(LineShadowCaster lineShadowCaster) {
-        int index = lineShadowCasters.indexOf(lineShadowCaster);
-        lineShadowCasters.set(index, lineShadowCasters.get(lineShadowCasters.size() - 1));
-        lineShadowCasters.remove(lineShadowCasters.size() - 1);
-    }
-
-    public void setCameraPosition(float x, float y) {
-        camera.positionX = x;
-        camera.positionY = y;
-    }
-
-    public void addUpdateListener(UpdateListener listener) {
-        updateListeners.add(listener);
-    }
-
-    public void removeUpdateListener(UpdateListener listener) {
-        int index = updateListeners.indexOf(listener);
-        updateListeners.set(index, updateListeners.get(updateListeners.size() - 1));
-        updateListeners.remove(updateListeners.size() - 1);
-    }
-
-    private static int drawSprites20(List<Sprite> sprites, FloatBuffer spriteBuffer) {
-        int numberOfSpritesPending = 0;
-        for(Sprite sprite : sprites) {
-            spriteBuffer.put(sprite.positionX);
-            spriteBuffer.put(sprite.positionY);
-            spriteBuffer.put(0.0f);
-            spriteBuffer.put(sprite.texU);
-            spriteBuffer.put(sprite.texV);
-
-            spriteBuffer.put(sprite.positionX);
-            spriteBuffer.put(sprite.positionY + sprite.height);
-            spriteBuffer.put(sprite.height);
-            spriteBuffer.put(sprite.texU);
-            spriteBuffer.put(sprite.texV + sprite.texWidth);
-
-            spriteBuffer.put(sprite.positionX + sprite.width);
-            spriteBuffer.put(sprite.positionY);
-            spriteBuffer.put(0.0f);
-            spriteBuffer.put(sprite.texU + sprite.texWidth);
-            spriteBuffer.put(sprite.texV);
-
-
-            spriteBuffer.put(sprite.positionX + sprite.width);
-            spriteBuffer.put(sprite.positionY);
-            spriteBuffer.put(0.0f);
-            spriteBuffer.put(sprite.texU + sprite.texWidth);
-            spriteBuffer.put(sprite.texV);
-
-            spriteBuffer.put(sprite.positionX);
-            spriteBuffer.put(sprite.positionY + sprite.height);
-            spriteBuffer.put(sprite.height);
-            spriteBuffer.put(sprite.texU);
-            spriteBuffer.put(sprite.texV + sprite.texWidth);
-
-            spriteBuffer.put(sprite.positionX + sprite.width);
-            spriteBuffer.put(sprite.positionY + sprite.height);
-            spriteBuffer.put(sprite.height);
-            spriteBuffer.put(sprite.texU + sprite.texWidth);
-            spriteBuffer.put(sprite.texV + sprite.texHeight);
-            numberOfSpritesPending++;
-        }
-        return numberOfSpritesPending;
+    public void removeAllWorlds() {
+        worldUpdatingSystem.removeAllWorlds();
     }
 
     @TargetApi(18)
@@ -601,69 +286,5 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
         frameSyncObjects[currentBufferIndex] = GLES30.glFenceSync(GLES30.GL_SYNC_GPU_COMMANDS_COMPLETE,
                 0);
         currentBufferIndex = currentBufferIndex ^ 1;
-    }
-
-    private static int drawSprites30(List<Sprite> sprites, FloatBuffer buffer) {
-        int numberOfSpritesPending = 0;
-        for(Sprite sprite : sprites) {
-            buffer.put(sprite.positionX);
-            buffer.put(sprite.positionY);
-            buffer.put(sprite.width);
-            buffer.put(sprite.height);
-            buffer.put(sprite.texU);
-            buffer.put(sprite.texV);
-            buffer.put(sprite.texWidth);
-            buffer.put(sprite.texHeight);
-            numberOfSpritesPending++;
-        }
-        return numberOfSpritesPending;
-    }
-
-    private static void submitSprites20(int offsetInBytes, int spriteCount, int spritePositionHandle,
-                                 int spriteTexCoordinatesHandle, FloatBuffer spriteBuffer) {
-        final int oldPosition = spriteBuffer.position();
-        spriteBuffer.position(offsetInBytes / 4);
-        GLES20.glVertexAttribPointer(spritePositionHandle, 3,
-                GLES20.GL_FLOAT, false, 5, spriteBuffer);
-
-        spriteBuffer.position(offsetInBytes / 4 + 3);
-        GLES20.glVertexAttribPointer(spriteTexCoordinatesHandle, 2,
-                GLES20.GL_FLOAT, false, 5, spriteBuffer);
-
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, spriteCount * 6);
-        spriteBuffer.position(oldPosition);
-    }
-
-    @TargetApi(18)
-    private static void submitSprites30(int offsetInBytes, int spriteCount,
-                                 int spritePositionHandle, int spriteTexCoordinatesHandle) {
-
-        GLES30.glFlushMappedBufferRange(GLES30.GL_ARRAY_BUFFER, offsetInBytes,
-                spriteCount * SPRITE_SIZE_IN_BYTES30);
-        GLES30.glVertexAttribPointer(spritePositionHandle, 4,
-                GLES30.GL_FLOAT, false, 8, offsetInBytes);
-
-        GLES30.glVertexAttribPointer(spriteTexCoordinatesHandle, 4,
-                GLES30.GL_FLOAT, false, 8, offsetInBytes + 4);
-
-
-        GLES30.glDrawArraysInstanced(GLES30.GL_TRIANGLE_STRIP, 0, 4, spriteCount);
-    }
-
-    private static void sortBackToFront(List<Sprite> sprites) {
-        sort(sprites, new Comparator<Sprite>() {
-            @Override
-            public int compare(Sprite s1, Sprite s2) {
-                final float lowerY1 = s1.positionY + s1.height;
-                final float lowerY2 = s2.positionY + s2.height;
-                if(lowerY1 > lowerY2){
-                    return 1;
-                }
-                else if (lowerY1 == lowerY2){
-                    return 0;
-                }
-                return -1;
-            }
-        });
     }
 }

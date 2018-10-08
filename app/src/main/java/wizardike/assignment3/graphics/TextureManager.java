@@ -5,7 +5,7 @@ import android.opengl.GLES20;
 public class TextureManager {
     private int textureHandle;
 
-    public TextureManager(int textureSize) {
+    TextureManager(int textureSize) {
         int[] temp = new int[1];
         GLES20.glGenTextures(1, temp, 0);
         textureHandle = temp[0];

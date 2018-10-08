@@ -1,86 +1,114 @@
 package wizardike.assignment3.physics;
 
-import java.util.ArrayList;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
+import wizardike.assignment3.ComponentStorage;
+import wizardike.assignment3.Engine;
+import wizardike.assignment3.entities.EntityAllocator;
+import wizardike.assignment3.entities.EntityUpdater;
 import wizardike.assignment3.geometry.AlignedRectangle;
 import wizardike.assignment3.geometry.Circle;
-import wizardike.assignment3.graphics.UpdateListener;
 import wizardike.assignment3.geometry.Vector2;
-import wizardike.assignment3.Engine;
+import wizardike.assignment3.levels.Level;
 
 import static wizardike.assignment3.geometry.IntersectionTesting.isIntersecting;
 
-public class CollisionSystem implements UpdateListener{
-    private Engine world;
-    private ArrayList<Collidable> collidables = new ArrayList<>();
+public class CollisionSystem {
+    private final ComponentStorage<Collidable> collidableComponentStorage;
 
-    public CollisionSystem(Engine world) {
-        this.world = world;
+    public CollisionSystem() {
+        collidableComponentStorage = new ComponentStorage<>();
     }
 
-    @Override
-    public void update() {
-        //note: some collisions might be missed if a Collidable is removed from collidables during this method
-        for(int i = 0; i < collidables.size(); ++i) {
-            for(int j = i + 1; j < collidables.size(); ++j) {
-                collidables.get(i).collide(world, collidables.get(j));
+    public CollisionSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
+        final EntityAllocator entityAllocator = engine.getEntityAllocator();
+
+        final int collidableCount = save.readInt();
+        Collidable[] collidables = new Collidable[collidableCount];
+        for(int i = 0; i != collidableCount; ++i) {
+            final int id = save.readInt();
+            collidables[i] = CollidableLoader.load(id, save);
+        }
+        int[] collidableEntities = new int[collidableCount];
+        for(int i = 0; i != collidableCount; ++i) {
+            final int oldEntity = save.readInt();
+            collidableEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+        }
+        collidableComponentStorage = new ComponentStorage<>(collidableEntities, collidables);
+    }
+
+    public void update(Level level) {
+        Collidable[] collidables = collidableComponentStorage.getAllComponents();
+        int[] entities = collidableComponentStorage.getAllEntities();
+        for(int i = 0; i < collidables.length; ++i) {
+            for(int j = i + 1; j < collidables.length; ++j) {
+                collidables[i].collide(level, entities[i], collidables[j], entities[j]);
             }
         }
     }
 
-    public void add(Collidable collidable) {
-        collidables.add(collidable);
+    public void add(int entity, Collidable collidable) {
+        collidableComponentStorage.addComponent(entity, collidable);
     }
 
-    public void remove(Collidable collidable) {
-        int index = collidables.indexOf(collidable);
-        collidables.set(index, collidables.get(collidables.size() - 1));
-        collidables.remove(collidables.size() - 1);
+    public void removeAll(int entity) {
+        collidableComponentStorage.removeComponents(entity);
     }
 
-    public static void collide(Engine world, CircleHitBox obj1, CircleHitBox obj2) {
+    public static void collide(CircleHitBox obj1, CircleHitBox obj2) {
         if(isColliding(obj1, obj2)) {
             Vector2 displacement = getOverlap(obj1, obj2);
             resolveOverlap(displacement, obj1.getPosition(), obj1.getMass(), obj2.getPosition(), obj2.getMass());
         }
     }
 
-    public static void collide(Engine world, CircleHitBox obj1, AlignedRectangleHitBox obj2) {
+    public void save(DataOutputStream save) throws IOException {
+        Collidable[] collidables = collidableComponentStorage.getAllComponents();
+        save.writeInt(collidables.length);
+        for(Collidable collidable : collidables) {
+            save.writeInt(collidable.getId());
+            collidable.save(save);
+        }
+    }
+
+    public static void collide(CircleHitBox obj1, AlignedRectangleHitBox obj2) {
         if(isColliding(obj1, obj2)) {
             Vector2 displacement = getOverlap(obj1, obj2);
             resolveOverlap(displacement, obj1.getPosition(), obj1.getMass(), obj2.getPosition(), obj2.getMass());
         }
     }
 
-    public static void collide(Engine world, AlignedRectangleHitBox obj1, AlignedRectangleHitBox obj2) {
+    public static void collide(AlignedRectangleHitBox obj1, AlignedRectangleHitBox obj2) {
         if(isColliding(obj1, obj2)) {
             Vector2 displacement = getOverlap(obj1, obj2);
             resolveOverlap(displacement, obj1.getPosition(), obj1.getMass(), obj2.getPosition(), obj2.getMass());
         }
     }
 
-    public static void collide(Engine world, TriggeredCircleHitBox obj1, AlignedRectangleHitBox obj2) {
+    public static void collide(Level level, TriggeredCircleHitBox obj1, int entity1, AlignedRectangleHitBox obj2, int entity2) {
         if(isColliding(obj1, obj2)) {
             Vector2 displacement = getOverlap(obj1, obj2);
             resolveOverlap(displacement, obj1.getPosition(), obj1.getMass(), obj2.getPosition(), obj2.getMass());
-            obj1.onCollision(world, obj2);
+            obj1.onCollision(level, entity1, obj2, entity2);
         }
     }
 
-    public static void collide(Engine world, TriggeredCircleHitBox obj1, CircleHitBox obj2) {
+    public static void collide(Level level, TriggeredCircleHitBox obj1, int entity1, CircleHitBox obj2, int entity2) {
         if(isColliding(obj1, obj2)) {
             Vector2 displacement = getOverlap(obj1, obj2);
             resolveOverlap(displacement, obj1.getPosition(), obj1.getMass(), obj2.getPosition(), obj2.getMass());
-            obj1.onCollision(world, obj2);
+            obj1.onCollision(level, entity1, obj2, entity2);
         }
     }
 
-    public static void collide(Engine world, TriggeredCircleHitBox obj1, TriggeredCircleHitBox obj2) {
+    public static void collide(Level level, TriggeredCircleHitBox obj1, int entity1, TriggeredCircleHitBox obj2, int entity2) {
         if(isColliding(obj1, obj2)) {
             Vector2 displacement = getOverlap(obj1, obj2);
             resolveOverlap(displacement, obj1.getPosition(), obj1.getMass(), obj2.getPosition(), obj2.getMass());
-            obj1.onCollision(world, obj2);
-            obj2.onCollision(world, obj2);
+            obj1.onCollision(level, entity1, obj2, entity2);
+            obj2.onCollision(level, entity2, obj1, entity1);
         }
     }
 
@@ -96,15 +124,15 @@ public class CollisionSystem implements UpdateListener{
                 alignedRectangle2.getX() >= alignedRectangle1.getX() &&
                         alignedRectangle2.getX() < alignedRectangle1.getX() + alignedRectangle1.getWidth()) &&
                 (alignedRectangle1.getY() > alignedRectangle2.getY() &&
-                alignedRectangle1.getY() < alignedRectangle2.getY() + alignedRectangle2.getHight() ||
+                alignedRectangle1.getY() < alignedRectangle2.getY() + alignedRectangle2.getHeight() ||
                         alignedRectangle2.getY() >= alignedRectangle1.getY() &&
-                                alignedRectangle2.getY() < alignedRectangle1.getY() + alignedRectangle1.getHight());
+                                alignedRectangle2.getY() < alignedRectangle1.getY() + alignedRectangle1.getHeight());
     }
 
     private static boolean isColliding(Circle circle, AlignedRectangle rect)
     {
         float rectHalfWidth = rect.getWidth() * 0.5f;
-        float rectHalfHeight = rect.getHight() * 0.5f;
+        float rectHalfHeight = rect.getHeight() * 0.5f;
         return isIntersecting(circle.getX(), circle.getY(), circle.getRadius(),
                 rect.getX() + rectHalfWidth, rect.getY() + rectHalfHeight,
                 rectHalfWidth, rectHalfHeight);
@@ -127,7 +155,7 @@ public class CollisionSystem implements UpdateListener{
     private static Vector2 getOverlap(Circle circle, AlignedRectangle rectangle) {
         float distanceX, distanceY;
         float rectangleMaxX = rectangle.getX() + rectangle.getWidth();
-        float rectangleMaxY = rectangle.getY() + rectangle.getHight();
+        float rectangleMaxY = rectangle.getY() + rectangle.getHeight();
         if(circle.getY() > rectangle.getY() && circle.getY() < rectangleMaxY) {
             distanceX = ((rectangle.getX() + rectangleMaxX) * 0.5f) - circle.getX();
             if(distanceX > 0.0f) {
@@ -202,9 +230,9 @@ public class CollisionSystem implements UpdateListener{
         }
         float displacementY;
         if(r1.getY() < r2.getY()) {
-            displacementY = (r1.getY() + r1.getHight()) - r2.getY();
+            displacementY = (r1.getY() + r1.getHeight()) - r2.getY();
         } else {
-            displacementY = r1.getY() - (r2.getY() + r2.getHight());
+            displacementY = r1.getY() - (r2.getY() + r2.getHeight());
         }
         if(displacementX == 0.0f && displacementY == 0.0f){
             displacementX = 0.0001f;

@@ -132,8 +132,8 @@ public class PlayGameActivity extends AppCompatActivity {
     private void loadEntityClasses() {
         try {
             Log.d("PlayGameActivity", "loading classes");
-            Class.forName("wizardike.assignment3.entities.EntityGenerator");
-            Class.forName("wizardike.assignment3.entities.EntityLoader");
+            Class.forName("wizardike.assignment3.levels.LevelGenerator");
+            Class.forName("wizardike.assignment3.levels.EntityLoader");
 
             PathClassLoader classLoader = (PathClassLoader)getClassLoader();
             DexFile df = new DexFile(getApplicationInfo().sourceDir);

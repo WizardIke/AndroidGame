@@ -9,41 +9,38 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import wizardike.assignment3.entities.Entity;
-import wizardike.assignment3.entities.EntityGenerator;
-import wizardike.assignment3.entities.EntityLoader;
-import wizardike.assignment3.entities.World;
+import wizardike.assignment3.entities.EntityAllocator;
 import wizardike.assignment3.graphics.GraphicsManager;
 
 public class Engine {
     private static final int MAX_AUDIO_STREAMS = 16;
 
     private PlayGameRequest playGameRequest;
-    private GraphicsManager graphicsSystem;
+    private GraphicsManager graphicsManager;
     private AudioManager audioManager;
     private WorkerThread workerThread = new WorkerThread();
-    private EntityStreamingManager entityStreamingManager;
+    private EntityAllocator entityAllocator = new EntityAllocator();
 
-    private LoadingScreen loadingScreen;
-    private World world = null;
+    private LoadingScreen loadingScreen = null;
 
     public Engine(Activity context, PlayGameRequest playGameRequest) {
-        graphicsSystem = new GraphicsManager(context);
+        graphicsManager = new GraphicsManager(context);
+        graphicsManager.setEngine(this);
         audioManager = new AudioManager(context, MAX_AUDIO_STREAMS);
         workerThread.start();
-        entityStreamingManager = new EntityStreamingManager(this);
         this.playGameRequest = playGameRequest;
         //create the loading screen
-        loadingScreen = new LoadingScreen(this, new EntityGenerator.Callback() {
+        new LoadingScreen(this, new LoadingScreen.Callback() {
             @Override
-            public void onLoadComplete(Entity entity) {
+            public void onLoadComplete(LoadingScreen loadingScreen) {
+                Engine.this.loadingScreen = loadingScreen;
                 loadingScreenReady();
             }
         });
     }
 
     private void loadingScreenReady() {
-        graphicsSystem.queueEvent(new Runnable() {
+        graphicsManager.queueEvent(new Runnable() {
             @Override
             public void run() {
                 //display the loading screen
@@ -52,10 +49,9 @@ public class Engine {
                     @Override
                     public void run() {
                         try {
-                            loadWorld(playGameRequest.saveFile, new EntityLoader.EntityLoadedCallback() {
+                            loadWorlds(playGameRequest.saveFile, new GraphicsManager.Callback() {
                                 @Override
-                                public void onLoadComplete(Entity entity) {
-                                    world = (World)entity;
+                                public void onLoadComplete(GraphicsManager graphicsManager) { //will be called on the graphics thread
                                     loadingFinished();
                                 }
                             });
@@ -70,27 +66,20 @@ public class Engine {
     }
 
     private void loadingFinished() {
-        graphicsSystem.queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                //Remove the loading screen
-                loadingScreen.stop(Engine.this);
-                loadingScreen = null; //delete loading screen
-                //Start the world updating and displaying
-                world.start(Engine.this);
-            }
-        });
+        //Remove the loading screen
+        loadingScreen.stop(Engine.this);
+        loadingScreen = null; //delete loading screen
     }
 
     /**
      * Loads a saved game world from a file
      */
-    private void loadWorld(Uri saveFileUri, EntityLoader.EntityLoadedCallback callback) throws Exception {
+    private void loadWorlds(Uri saveFileUri, GraphicsManager.Callback callback) throws Exception {
         DataInputStream save = null;
         try {
             File saveFile = new File(saveFileUri.getPath());
             save = new DataInputStream(new FileInputStream(saveFile));
-            EntityLoader.loadEntity(World.id, save, this, callback);
+            graphicsManager.loadWorlds(save, callback);
         } finally {
             if(save != null) {
                 save.close();
@@ -107,7 +96,7 @@ public class Engine {
         DataOutputStream save = null;
         try {
             save = new DataOutputStream(new FileOutputStream(saveFile));
-            world.save(save);
+            graphicsManager.saveWorlds(save);
         } finally {
             if(save != null) {
                 save.close();
@@ -116,7 +105,7 @@ public class Engine {
     }
 
     public GraphicsManager getGraphicsManager() {
-        return graphicsSystem;
+        return graphicsManager;
     }
 
     public AudioManager getAudioManager() {
@@ -127,20 +116,12 @@ public class Engine {
         return workerThread;
     }
 
-    public EntityStreamingManager getEntityStreamingManager() {
-        return entityStreamingManager;
-    }
-
-    public World getWorld() {
-        return world;
-    }
-
     public void resume() {
-        graphicsSystem.onResume();
+        graphicsManager.onResume();
     }
 
     public void pause() {
-        graphicsSystem.onPause();
+        graphicsManager.onPause();
         try {
             save(playGameRequest.saveFile);
         } catch (Exception e) {
@@ -152,21 +133,22 @@ public class Engine {
      * will eventually stop the game playing
      */
     public void playingEnded(final PlayGameRequest.GameState state) {
-        graphicsSystem.queueEvent(new Runnable() {
+        graphicsManager.queueEvent(new Runnable() {
             @Override
             public void run() {
                 if(loadingScreen != null) {
                     loadingScreen.stop(Engine.this);
                     loadingScreen = null;
                 }
-                if(world != null) {
-                    world.stop(Engine.this);
-                    entityStreamingManager.unloadEntity(World.id);
-                }
+                graphicsManager.removeAllWorlds();
                 workerThread.interrupt();
                 audioManager.close();
                 playGameRequest.onPlayingEnded(state);
             }
         });
+    }
+
+    public EntityAllocator getEntityAllocator() {
+        return entityAllocator;
     }
 }

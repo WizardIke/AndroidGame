@@ -12,6 +12,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Plays a number of music resources at random.
+ * All methods should be called on the ui thread
+ */
 public class AmbientMusicPlayer implements /*AutoCloseable*/ Closeable, MediaPlayer.OnCompletionListener {
     private int[] mFileIDs;
     private int mLastFileIDIndex;

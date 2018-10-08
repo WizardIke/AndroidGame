@@ -10,7 +10,7 @@ public abstract class PlayGameRequest {
     }
     public Uri saveFile;
 
-    public PlayGameRequest(Uri saveFile) {
+    PlayGameRequest(Uri saveFile) {
         this.saveFile = saveFile;
     }
 

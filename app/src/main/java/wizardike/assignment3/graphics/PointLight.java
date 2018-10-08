@@ -13,8 +13,6 @@ public class PointLight {
     public float colorG;
     public float colorB;
 
-    public PointLight() {}
-
     public PointLight(float positionX, float positionY, float positionZ, float radius,
                       float colorR, float colorG, float colorB) {
         this.positionX = positionX;
