@@ -133,61 +133,81 @@ public class LevelStreamingManager {
      * Can be called from any thread if level save functions can be
      */
     public void save(DataOutputStream save) throws IOException {
-        final int descriptorsSize = descriptors.size();
-        for(int i = 0; i != descriptorsSize; ++i) {
-            final int levelId = descriptors.keyAt(i);
-            Descriptor descriptor = descriptors.valueAt(i);
-            if(descriptor.loaded) {
-                saveData(descriptor.level, levelId);
+        synchronized (descriptors) {
+            final int descriptorsSize = descriptors.size();
+            for(int i = 0; i != descriptorsSize; ++i) {
+                final int levelId = descriptors.keyAt(i);
+                Descriptor descriptor = descriptors.valueAt(i);
+                if(descriptor.loaded) {
+                    saveData(descriptor.level, levelId);
+                }
             }
         }
-        final int levelCount = saveData.size();
-        save.writeInt(levelCount);
-        for(int i = 0; i != levelCount; ++i) {
-            final byte[] data = saveData.valueAt(i);
-            final int levelId = saveData.keyAt(i);
-            save.writeInt(levelId);
-            save.writeInt(data.length);
-            save.write(data);
+        synchronized (saveData) {
+            final int levelCount = saveData.size();
+            save.writeInt(levelCount);
+            for(int i = 0; i != levelCount; ++i) {
+                final byte[] data = saveData.valueAt(i);
+                final int levelId = saveData.keyAt(i);
+                save.writeInt(levelId);
+                save.writeInt(data.length);
+                save.write(data);
+            }
         }
     }
 
     /**
-     * Should be called on the worker thread
+     * Can be called from any thread. Should be called on a worker thread
      */
     public void loadLevel(int entityID, Request request) {
-        int index = descriptors.indexOfKey(entityID);
-        if(index >= 0) {
-            Descriptor descriptor = descriptors.valueAt(index);
-            descriptor.addLoadRequest(request);
-        } else {
-            Descriptor descriptor = new Descriptor(request);
-            descriptors.put(entityID, descriptor);
+        int index;
+        Descriptor descriptor;
+        synchronized (descriptors) {
+            index = descriptors.indexOfKey(entityID);
+            if(index >= 0) {
+                descriptor = descriptors.valueAt(index);
+                descriptor.addLoadRequest(request);
+            } else {
+                descriptor = new Descriptor(request);
+                descriptors.put(entityID, descriptor);
+            }
+        }
+
+        if(index < 0) {
             loadUniqueRequest(entityID, descriptor);
         }
     }
 
     /**
-     * Should be called on the worker thread
+     * Can be called from any thread. Should be called on a worker thread
      */
     public void cancelLoadLevel(int entityID, Request request) {
-        Descriptor descriptor = descriptors.get(entityID);
-        descriptor.cancelLoadRequest(request);
+        synchronized (descriptors) {
+            Descriptor descriptor = descriptors.get(entityID);
+            descriptor.cancelLoadRequest(request);
+        }
     }
 
     /**
-     * Should be called on the worker thread
+     * Can be called from any thread. Should be called on a worker thread
      */
     public void unloadLevel(int entityID) {
-        Descriptor descriptor = descriptors.get(entityID);
-        boolean canUnload = descriptor.addUnloadRequest();
+        Descriptor descriptor;
+        boolean canUnload;
+        synchronized (descriptors) {
+            descriptor = descriptors.get(entityID);
+            canUnload = descriptor.addUnloadRequest();
+        }
         if(canUnload) {
             unloadUniqueRequest(entityID, descriptor);
         }
     }
 
     private void loadUniqueRequest(final int levelId, final Descriptor descriptor) {
-        byte[] data = saveData.get(levelId);
+        byte[] data;
+        synchronized (saveData) {
+            data = saveData.get(levelId);
+        }
         if(data != null) {
             final DataInputStream dataReader = new DataInputStream(new ByteArrayInputStream(data));
             try {
@@ -212,7 +232,9 @@ public class LevelStreamingManager {
 
     private void loadUniqueRequestFinished(Descriptor descriptor, int levelId, Level entity) {
         boolean shouldUnload;
-        shouldUnload = descriptor.onLoadComplete(entity);
+        synchronized (descriptors) {
+            shouldUnload = descriptor.onLoadComplete(entity);
+        }
         if(shouldUnload) {
             unloadUniqueRequest(levelId, descriptor);
         }
@@ -224,7 +246,9 @@ public class LevelStreamingManager {
         saveData(level, levelId);
 
         boolean shouldLoad;
-        shouldLoad = descriptor.onUnloadComplete();
+        synchronized (descriptors) {
+            shouldLoad = descriptor.onUnloadComplete();
+        }
         if(shouldLoad) {
             loadUniqueRequest(levelId, descriptor);
         }

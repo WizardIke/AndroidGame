@@ -49,7 +49,7 @@ public class TextureManager implements Closeable{
 
     private int textureHandle;
     private SparseArray<Descriptor> descriptors = new SparseArray<>();
-    private TextureSubAllocator textureSubAllocator = new TextureSubAllocator(4, 4);
+    private TextureSubAllocator textureSubAllocator = new TextureSubAllocator(4);
     private Engine engine;
     private int textureSize;
 
@@ -115,10 +115,17 @@ public class TextureManager implements Closeable{
                 engine.getGraphicsManager().post(new Runnable() {
                     @Override
                     public void run() {
-                        //TODO scale texture
+                        //scale texture
+                        int textureWidthAndWight = textureSize / textureSubAllocator.getWidthAndHeight();
+                        //noinspection SuspiciousNameCombination
+                        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, textureWidthAndWight,
+                                textureWidthAndWight, true);
+                        bitmap.recycle();
+                        //copy image to texture
                         int offsetX = (int)((textureCoordinates.getX() + 1.0f) * 0.5f * textureSize);
                         int offsetY = (int)((textureCoordinates.getY() + 1.0f) * 0.5f * textureSize);
-                        GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, bitmap);
+                        GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
+                        resizedBitmap.recycle();
                         synchronized (TextureManager.this) {
                             Descriptor descriptor = descriptors.get(textureId);
                             descriptor.onLoadComplete();
