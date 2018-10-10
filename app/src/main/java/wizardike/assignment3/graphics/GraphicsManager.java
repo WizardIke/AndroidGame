@@ -72,7 +72,7 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
     private Camera camera = new Camera();
     private GeometryBuffer geometryBuffer = null;
     private LightBuffer lightBuffer = null;
-    private TextureManager textureManager;
+    private TextureManager textureManager = null;
     private long[] frameSyncObjects;
     private int currentBufferIndex;
     private int openGLVersion;
@@ -90,10 +90,10 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
     }
 
     private void init() {
-        // Create an OpenGL ES 3.1 or 2.0 context
+        // Create an OpenGL ES 3.1, 3.0 or 2.0 context
         setEGLContextFactory(new EGLContextCreator());
-        //TODO make sure the default framebuffer doesn't have a depth buffer
-
+        //make sure the default framebuffer doesn't have a depth buffer
+        setEGLConfigChooser(false);
         // Set the Renderer for drawing on the GLSurfaceView
         setRenderer(this);
     }
@@ -151,8 +151,11 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
             }
         }
 
-        //TODO change this
-        textureManager = new TextureManager(engine);
+        if(textureManager == null) {
+            textureManager = new TextureManager(engine);
+        } else {
+            textureManager.reload();
+        }
     }
 
     @Override

@@ -9,15 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import java.io.IOException;
-import java.util.Enumeration;
-
-import dalvik.system.DexFile;
-import dalvik.system.PathClassLoader;
-
 public class PlayGameActivity extends AppCompatActivity {
-    private static boolean entityClassesLoaded = false;
-
     private Engine engine;
     private Uri saveFile = null;
 
@@ -29,11 +21,6 @@ public class PlayGameActivity extends AppCompatActivity {
         ActionBar actionbar = getSupportActionBar();
         if(actionbar != null) {
             actionbar.hide();
-        }
-
-        if(!entityClassesLoaded) {
-            loadEntityClasses();
-            entityClassesLoaded = true;
         }
 
         boolean succeeded = false;
@@ -92,20 +79,14 @@ public class PlayGameActivity extends AppCompatActivity {
         }
 
         engine.resume();
+        Log.e("PlayGameActivity", "Finished resuming");
     }
 
     @Override
     protected void onPause() {
+        Log.e("PlayGameActivity", "Paused");
         super.onPause();
         engine.pause();
-    }
-
-    @Override
-    public void onBackPressed() {
-        Intent intent = new Intent();
-        intent.setData(null);
-        setResult(RESULT_OK, intent);
-        super.onBackPressed();
     }
 
     private void onGameError() {
@@ -127,26 +108,5 @@ public class PlayGameActivity extends AppCompatActivity {
         intent.setData(null);
         setResult(RESULT_OK, intent);
         finish();
-    }
-
-    private void loadEntityClasses() {
-        try {
-            Log.d("PlayGameActivity", "loading classes");
-            Class.forName("wizardike.assignment3.levels.LevelGenerator");
-            Class.forName("wizardike.assignment3.levels.EntityLoader");
-
-            PathClassLoader classLoader = (PathClassLoader)getClassLoader();
-            DexFile df = new DexFile(getApplicationInfo().sourceDir);
-            for (Enumeration<String> iterator = df.entries(); iterator.hasMoreElements(); ) {
-                String className = iterator.nextElement();
-                Log.d("PlayGameActivity", "found class: " + className);
-                if (className.contains("wizardike.assignment3.entities")) {
-                    classLoader.loadClass(className);
-                    Log.d("PlayGameActivity", "loaded class: " + className);
-                }
-            }
-        } catch (ClassNotFoundException | IOException e) {
-            onGameError();
-        }
     }
 }

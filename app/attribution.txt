@@ -1,0 +1,30 @@
+Title:
+    Soliloquy
+
+Author:
+    Matthew Pablo
+
+URL:
+    http://opengameart.org/content/soliloquy
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * soliloquy.mp3
+
+
+Title:
+    Tropic Strike (Live Orchestra)
+
+Author:
+    Matthew Pablo
+
+URL:
+    http://opengameart.org/content/tropic-strike-live-orchestra
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * tropic_strike.mp3

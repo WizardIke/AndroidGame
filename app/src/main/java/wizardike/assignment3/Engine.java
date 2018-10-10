@@ -8,6 +8,11 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import wizardike.assignment3.entities.EntityAllocator;
 import wizardike.assignment3.graphics.GraphicsManager;
@@ -21,7 +26,7 @@ public class Engine {
     private PlayGameRequest playGameRequest;
     private GraphicsManager graphicsManager;
     private AudioManager audioManager;
-    private WorkerThread workerThread = new WorkerThread();
+    private ThreadPoolExecutor backgroundWorkManager;
     private EntityAllocator entityAllocator = new EntityAllocator();
 
     private LoadingScreen loadingScreen = null;
@@ -31,7 +36,13 @@ public class Engine {
         graphicsManager = new GraphicsManager(context);
         graphicsManager.setEngine(this);
         audioManager = new AudioManager(context, MAX_AUDIO_STREAMS);
-        workerThread.start();
+        backgroundWorkManager = new ThreadPoolExecutor(
+                Runtime.getRuntime().availableProcessors(),
+                Runtime.getRuntime().availableProcessors(),
+                1,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>()
+        );
         this.playGameRequest = playGameRequest;
         //create the loading screen
         new LoadingScreen(this, new LoadingScreen.Callback() {
@@ -49,7 +60,7 @@ public class Engine {
             public void run() {
                 //display the loading screen
                 loadingScreen.start(Engine.this);
-                workerThread.addTask(new Runnable() {
+                backgroundWorkManager.execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
@@ -80,16 +91,25 @@ public class Engine {
     /**
      * Loads a saved game world from a file
      */
-    private void loadWorld(Uri saveFileUri, WorldLoader.Callback callback) throws Exception {
-        DataInputStream save = null;
+    private void loadWorld(Uri saveFileUri, final WorldLoader.Callback callback) throws Exception {
+        File saveFile = new File(saveFileUri.getPath());
+        final DataInputStream save = new DataInputStream(new FileInputStream(saveFile));
         try {
-            File saveFile = new File(saveFileUri.getPath());
-            save = new DataInputStream(new FileInputStream(saveFile));
-            new MainWorld(save, this, callback);
-        } finally {
-            if(save != null) {
-                save.close();
-            }
+            new MainWorld(save, this, new WorldLoader.Callback() {
+                @Override
+                public void onLoadComplete(World world) {
+                    try {
+                        save.close();
+                        callback.onLoadComplete(world);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        playGameRequest.onPlayingEnded(PlayGameRequest.GameState.error);
+                    }
+                }
+            });
+        } catch(Exception e) {
+            e.printStackTrace();
+            playGameRequest.onPlayingEnded(PlayGameRequest.GameState.error);
         }
     }
 
@@ -118,8 +138,8 @@ public class Engine {
         return audioManager;
     }
 
-    public WorkerThread getWorkerThread() {
-        return workerThread;
+    public Executor getBackgroundWorkManager() {
+        return backgroundWorkManager;
     }
 
     public void resume() {
@@ -150,7 +170,7 @@ public class Engine {
                     graphicsManager.removeWorld(mainWorld);
                     mainWorld = null;
                 }
-                workerThread.interrupt();
+                backgroundWorkManager.shutdown();
                 audioManager.close();
                 playGameRequest.onPlayingEnded(state);
             }

@@ -1,5 +1,6 @@
 package wizardike.assignment3.graphics;
 
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
@@ -105,7 +106,7 @@ public class TextureManager implements Closeable{
     }
 
     private void loadUniqueRequest(final int textureId, final Vector4 textureCoordinates) {
-        engine.getWorkerThread().addTask(new Runnable() {
+        engine.getBackgroundWorkManager().execute(new Runnable() {
             @Override
             public void run() {
                 final Bitmap bitmap = BitmapFactory.decodeResource(
@@ -141,5 +142,30 @@ public class TextureManager implements Closeable{
         int[] temp = new int[1];
         temp[0] = textureHandle;
         GLES20.glDeleteTextures(1, temp, 0);
+    }
+
+    /**
+     * Causes all the textures to be reloaded at the same locations.
+     * Must be called from the rendering thread.
+     */
+    public synchronized void reload() {
+        final int textureWidthAndWight = textureSize / textureSubAllocator.getWidthAndHeight();
+        final Resources resources = engine.getGraphicsManager().getResources();
+
+        final int descriptorsSize = descriptors.size();
+        for(int i = 0; i != descriptorsSize; ++i) {
+            final int textureId = descriptors.keyAt(i);
+            final Descriptor descriptor = descriptors.valueAt(i);
+            final Bitmap bitmap = BitmapFactory.decodeResource(resources, textureId);
+            //noinspection SuspiciousNameCombination
+            final Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, textureWidthAndWight,
+                    textureWidthAndWight, true);
+            bitmap.recycle();
+            final Vector4 textureCoordinates = descriptor.textureCoordinates;
+            final int offsetX = (int)((textureCoordinates.getX() + 1.0f) * 0.5f * textureSize);
+            final int offsetY = (int)((textureCoordinates.getY() + 1.0f) * 0.5f * textureSize);
+            GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
+            resizedBitmap.recycle();
+        }
     }
 }

@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import wizardike.assignment3.Engine;
+import wizardike.assignment3.graphics.Sprite;
+import wizardike.assignment3.graphics.SpriteSheets.SpriteSheetSystem;
 import wizardike.assignment3.updating.UpdatingSystem;
 import wizardike.assignment3.entities.EntityUpdater;
 import wizardike.assignment3.graphics.GeometrySystem;
@@ -24,6 +26,7 @@ public class Level {
     private CollisionSystem collisionSystem;
     private GeometrySystem geometrySystem;
     private LightingSystem lightingSystem;
+    private SpriteSheetSystem spriteSheetSystem;
 
     /**
      * Makes an empty level
@@ -33,10 +36,11 @@ public class Level {
         collisionSystem = new CollisionSystem();
         geometrySystem = new GeometrySystem();
         lightingSystem = new LightingSystem();
+        spriteSheetSystem = new SpriteSheetSystem();
     }
 
     /**
-     * Loads a level
+     * Loads a level. The level must not be used until the callback is called
      */
     Level(DataInputStream save, Engine engine, final Callback callback) throws IOException {
         final EntityUpdater entityUpdater = new EntityUpdater();
@@ -44,7 +48,15 @@ public class Level {
         collisionSystem = new CollisionSystem(save, engine, entityUpdater);
         geometrySystem = new GeometrySystem(save, engine, entityUpdater);
         lightingSystem = new LightingSystem(save, engine, entityUpdater);
-        callback.onLoadComplete(this);
+        Sprite[][] spritesToRemap = new Sprite[2][];
+        spritesToRemap[0] = geometrySystem.getSprites();
+        spritesToRemap[1] = geometrySystem.getTransparentSprites();
+        spriteSheetSystem = new SpriteSheetSystem(save, engine, entityUpdater, spritesToRemap, new SpriteSheetSystem.Callback() {
+            @Override
+            public void onLoadComplete(SpriteSheetSystem spriteSheetSystem) {
+                callback.onLoadComplete(Level.this);
+            }
+        });
     }
 
     public UpdatingSystem getUpdatingSystem() {
@@ -61,6 +73,10 @@ public class Level {
 
     public LightingSystem getLightingSystem() {
         return lightingSystem;
+    }
+
+    public SpriteSheetSystem getSpriteSheetSystem() {
+        return spriteSheetSystem;
     }
 
     public void update(Engine engine) {

@@ -175,4 +175,12 @@ public class GeometrySystem {
             save.writeInt(entity);
         }
     }
+
+    public Sprite[] getSprites() {
+        return spriteComponentStorage.getAllComponents();
+    }
+
+    public Sprite[] getTransparentSprites() {
+        return transparentSpriteComponentStorage.getAllComponents();
+    }
 }
