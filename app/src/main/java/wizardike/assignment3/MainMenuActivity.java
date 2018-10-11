@@ -6,7 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -18,18 +17,16 @@ public class MainMenuActivity extends AppCompatActivity {
     private AmbientMusicPlayer musicPlayer;
 
     // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
-    }
+    //static {
+    //    System.loadLibrary("native-lib");
+    //}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_menu);
+        musicPlayer = new AmbientMusicPlayer(new int[]{R.raw.tropic_strike, R.raw.soliloquy}, this);
 
-        // Example of a call to a native method
-        TextView tv = findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI());
+        setContentView(R.layout.activity_main_menu);
 
         Button startButton = findViewById(R.id.start_button);
         startButton.setOnClickListener(new View.OnClickListener() {
@@ -47,7 +44,13 @@ public class MainMenuActivity extends AppCompatActivity {
             }
         });
 
-        musicPlayer = new AmbientMusicPlayer(new int[]{R.raw.tropic_strike, R.raw.soliloquy}, this);
+        Button quitButton = findViewById(R.id.quit_button);
+        quitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
     }
 
     @Override
