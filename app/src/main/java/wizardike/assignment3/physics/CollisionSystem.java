@@ -19,7 +19,7 @@ public class CollisionSystem {
     private final ComponentStorage<Collidable> collidableComponentStorage;
 
     public CollisionSystem() {
-        collidableComponentStorage = new ComponentStorage<>();
+        collidableComponentStorage = new ComponentStorage<>(Collidable.class);
     }
 
     public CollisionSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
@@ -36,14 +36,15 @@ public class CollisionSystem {
             final int oldEntity = save.readInt();
             collidableEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
         }
-        collidableComponentStorage = new ComponentStorage<>(collidableEntities, collidables);
+        collidableComponentStorage = new ComponentStorage<>(Collidable.class, collidableEntities, collidables);
     }
 
     public void update(Level level) {
-        Collidable[] collidables = collidableComponentStorage.getAllComponents();
+        final Collidable[] collidables = collidableComponentStorage.getAllComponents();
+        final int collidableCount = collidableComponentStorage.size();
         int[] entities = collidableComponentStorage.getAllEntities();
-        for(int i = 0; i < collidables.length; ++i) {
-            for(int j = i + 1; j < collidables.length; ++j) {
+        for(int i = 0; i < collidableCount; ++i) {
+            for(int j = i + 1; j < collidableCount; ++j) {
                 collidables[i].collide(level, entities[i], collidables[j], entities[j]);
             }
         }
@@ -65,9 +66,11 @@ public class CollisionSystem {
     }
 
     public void save(DataOutputStream save) throws IOException {
-        Collidable[] collidables = collidableComponentStorage.getAllComponents();
-        save.writeInt(collidables.length);
-        for(Collidable collidable : collidables) {
+        final Collidable[] collidables = collidableComponentStorage.getAllComponents();
+        final int collidableCount = collidableComponentStorage.size();
+        save.writeInt(collidableCount);
+        for(int i = 0; i != collidableCount; ++i) {
+            Collidable collidable = collidables[i];
             save.writeInt(collidable.getId());
             collidable.save(save);
         }

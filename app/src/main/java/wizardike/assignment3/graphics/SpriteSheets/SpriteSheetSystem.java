@@ -23,11 +23,11 @@ public class SpriteSheetSystem {
     private ComponentStorage<SpriteSheet> spriteSheetComponentStorage;
 
     public SpriteSheetSystem() {
-        spriteSheetComponentStorage = new ComponentStorage<>();
+        spriteSheetComponentStorage = new ComponentStorage<>(SpriteSheet.class);
     }
 
     public SpriteSheetSystem(final DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
-                             final Sprite[][] spritesToRemap, final Callback callback) throws IOException {
+                             final Sprite[][] spritesToRemap, final int[] spritesToRemapLength, final Callback callback) throws IOException {
         //load sprite sheets and create remapping table
         final HashMap<Vector4, Vector4> remappingTable = new HashMap<>();
         final int spriteSheetCount = save.readInt();
@@ -38,7 +38,7 @@ public class SpriteSheetSystem {
             @Override
             public void onLoadComplete(SpriteSheet spriteSheet) {
                 if(loadedCount.incrementAndGet() == spriteSheetCount) {
-                    remapSprites(remappingTable, spritesToRemap);
+                    remapSprites(remappingTable, spritesToRemap, spritesToRemapLength);
 
                     final int[] entities = new int[spriteSheetCount];
                     for(int i = 0; i != spriteSheetCount; ++i) {
@@ -48,7 +48,7 @@ public class SpriteSheetSystem {
                             e.printStackTrace();
                         }
                     }
-                    spriteSheetComponentStorage = new ComponentStorage<>(entities, spriteSheets);
+                    spriteSheetComponentStorage = new ComponentStorage<>(SpriteSheet.class, entities, spriteSheets);
                     callback.onLoadComplete(SpriteSheetSystem.this);
                 }
             }
@@ -69,20 +69,26 @@ public class SpriteSheetSystem {
 
     public void save(DataOutputStream save) throws IOException {
         SpriteSheet[] spriteSheets = spriteSheetComponentStorage.getAllComponents();
-        save.writeInt(spriteSheets.length);
-        for(SpriteSheet spriteSheet : spriteSheets) {
+        final int spriteSheetCount = spriteSheetComponentStorage.size();
+        save.writeInt(spriteSheetCount);
+        for(int i = 0; i != spriteSheetCount; ++i) {
+            SpriteSheet spriteSheet = spriteSheets[i];
             save.writeInt(spriteSheet.getId());
             spriteSheet.save(save);
         }
         final int[] spriteSheetEntities = spriteSheetComponentStorage.getAllEntities();
-        for (int entity : spriteSheetEntities) {
-            save.writeInt(entity);
+        for (int i = 0; i != spriteSheetCount; ++i) {
+            save.writeInt(spriteSheetEntities[i]);
         }
     }
 
-    private void remapSprites(HashMap<Vector4, Vector4> remappingTable, Sprite[][] spritesToRemap) {
-        for(Sprite[] sprites : spritesToRemap) {
-            for(Sprite sprite : sprites) {
+    private void remapSprites(HashMap<Vector4, Vector4> remappingTable, Sprite[][] spritesToRemap,
+                              int[] spritesToRemapLength) {
+        for(int i = 0; i != spritesToRemap.length; ++i) {
+            Sprite[] sprites = spritesToRemap[i];
+            final int spriteCount = spritesToRemapLength[i];
+            for(int j = 0; j != spriteCount; ++j) {
+                Sprite sprite = sprites[j];
                 //remap sprite
                 Vector4 newCoordinates = remappingTable.get(
                         new Vector4(sprite.texU, sprite.texV, sprite.texWidth, sprite.texHeight)

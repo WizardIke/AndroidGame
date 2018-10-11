@@ -83,6 +83,7 @@ public class LevelStreamingManager {
         boolean onLoadComplete(Level level) {
             if(requests != null) {
                 loaded = true;
+                this.level = level;
                 do {
                     requests.onLoadComplete(level);
                     requests = requests.next;

@@ -16,9 +16,9 @@ public class LightingSystem {
     private final ComponentStorage<LineShadowCaster> lineShadowCasterComponentStorage;
 
     public LightingSystem() {
-        pointLightComponentStorage = new ComponentStorage<>();
-        circleShadowCasterComponentStorage = new ComponentStorage<>();
-        lineShadowCasterComponentStorage = new ComponentStorage<>();
+        pointLightComponentStorage = new ComponentStorage<>(PointLight.class);
+        circleShadowCasterComponentStorage = new ComponentStorage<>(CircleShadowCaster.class);
+        lineShadowCasterComponentStorage = new ComponentStorage<>(LineShadowCaster.class);
     }
 
     public LightingSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
@@ -34,7 +34,7 @@ public class LightingSystem {
             final int oldEntity = save.readInt();
             pointLightEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
         }
-        pointLightComponentStorage = new ComponentStorage<>(pointLightEntities, pointLights);
+        pointLightComponentStorage = new ComponentStorage<>(PointLight.class, pointLightEntities, pointLights);
 
 
         final int circleShadowCasterCount = save.readInt();
@@ -47,7 +47,7 @@ public class LightingSystem {
             final int oldEntity = save.readInt();
             circleShadowCasterEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
         }
-        circleShadowCasterComponentStorage = new ComponentStorage<>(circleShadowCasterEntities, circleShadowCasters);
+        circleShadowCasterComponentStorage = new ComponentStorage<>(CircleShadowCaster.class, circleShadowCasterEntities, circleShadowCasters);
 
 
         final int lineShadowCasterCount = save.readInt();
@@ -60,7 +60,7 @@ public class LightingSystem {
             final int oldEntity = save.readInt();
             lineShadowCasterEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
         }
-        lineShadowCasterComponentStorage = new ComponentStorage<>(lineShadowCasterEntities, lineShadowCasters);
+        lineShadowCasterComponentStorage = new ComponentStorage<>(LineShadowCaster.class, lineShadowCasterEntities, lineShadowCasters);
     }
 
     public void update(Engine engine) {
@@ -69,22 +69,26 @@ public class LightingSystem {
         final GeometryBuffer geometryBuffer = graphicsManager.getGeometryBuffer();
         final LightBuffer lightBuffer = graphicsManager.getLightBuffer();
         final PointLight[] pointLights = pointLightComponentStorage.getAllComponents();
+        final int pointLightCount = pointLightComponentStorage.size();
         final CircleShadowCaster[] circleShadowCasters = circleShadowCasterComponentStorage.getAllComponents();
+        final int circleShadowCasterCount = circleShadowCasterComponentStorage.size();
         final LineShadowCaster[] lineShadowCasters = lineShadowCasterComponentStorage.getAllComponents();
+        final int lineShadowCasterCount = lineShadowCasterComponentStorage.size();
 
         final float viewPortHalfWidth = 1 / camera.scaleX;
         final float viewPortHalfHeight = 1 / camera.scaleY;
         final int geometryColorTextureHandle = geometryBuffer.getColorTextureHandle();
         lightBuffer.prepareToRenderLights();
-        for(PointLight light : pointLights) {
+        for(int i = 0; i != pointLightCount; ++i) {
+            PointLight light = pointLights[i];
             if(IntersectionTesting.isIntersecting(light.positionX, light.positionY, light.radius,
                     camera.positionX, camera.positionY, viewPortHalfWidth, viewPortHalfHeight)) {
                 lightBuffer.renderLight(light, camera);
-                for(CircleShadowCaster shadowCaster : circleShadowCasters) {
-                    lightBuffer.renderCircleShadow(shadowCaster, light);
+                for(int j = 0; j != circleShadowCasterCount; ++j) {
+                    lightBuffer.renderCircleShadow(circleShadowCasters[j], light);
                 }
-                for(LineShadowCaster shadowCaster : lineShadowCasters) {
-                    lightBuffer.renderLineShadow(shadowCaster, light);
+                for(int j = 0; j != lineShadowCasterCount; ++j) {
+                    lightBuffer.renderLineShadow(lineShadowCasters[j], light);
                 }
                 lightBuffer.applyLighting(geometryColorTextureHandle, light, camera);
             }
@@ -117,33 +121,36 @@ public class LightingSystem {
 
     public void save(DataOutputStream save) throws IOException {
         final PointLight[] pointLights = pointLightComponentStorage.getAllComponents();
-        save.writeInt(pointLights.length);
-        for(PointLight pointLight : pointLights) {
-            pointLight.save(save);
+        final int pointLightCount = pointLightComponentStorage.size();
+        save.writeInt(pointLightCount);
+        for(int i = 0; i != pointLightCount; ++i) {
+            pointLights[i].save(save);
         }
         final int[] pointLightEntities = pointLightComponentStorage.getAllEntities();
-        for (int entity : pointLightEntities) {
-            save.writeInt(entity);
+        for (int i = 0; i != pointLightCount; ++i) {
+            save.writeInt(pointLightEntities[i]);
         }
 
         CircleShadowCaster[] circleShadowCasters = circleShadowCasterComponentStorage.getAllComponents();
-        save.writeInt(circleShadowCasters.length);
-        for(CircleShadowCaster shadowCaster : circleShadowCasters) {
-            shadowCaster.save(save);
+        final int circleShadowCasterCount = circleShadowCasterComponentStorage.size();
+        save.writeInt(circleShadowCasterCount);
+        for(int i = 0; i != circleShadowCasterCount; ++i) {
+            circleShadowCasters[i].save(save);
         }
         int[] circleShadowCasterEntities = circleShadowCasterComponentStorage.getAllEntities();
-        for (int entity : circleShadowCasterEntities) {
-            save.writeInt(entity);
+        for (int i = 0; i != circleShadowCasterCount; ++i) {
+            save.writeInt(circleShadowCasterEntities[i]);
         }
 
         LineShadowCaster[] lineShadowCasters = lineShadowCasterComponentStorage.getAllComponents();
-        save.writeInt(lineShadowCasters.length);
-        for(LineShadowCaster shadowCaster : lineShadowCasters) {
-            shadowCaster.save(save);
+        final int lineShadowCasterCount = lineShadowCasterComponentStorage.size();
+        save.writeInt(lineShadowCasterCount);
+        for(int i = 0; i != lineShadowCasterCount; ++i) {
+            lineShadowCasters[i].save(save);
         }
         int[] lineShadowCasterEntities = lineShadowCasterComponentStorage.getAllEntities();
-        for (int entity : lineShadowCasterEntities) {
-            save.writeInt(entity);
+        for (int i = 0; i != lineShadowCasterCount; ++i) {
+            save.writeInt(lineShadowCasterEntities[i]);
         }
     }
 }

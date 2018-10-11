@@ -2,6 +2,7 @@ package wizardike.assignment3;
 
 import android.util.SparseArray;
 
+import java.lang.reflect.Array;
 import java.util.Iterator;
 
 /**
@@ -16,12 +17,15 @@ public class ComponentStorage<E> {
     private int[] entities;
     private int size;
     private int capacity;
+    private Class<E> arrayCreator;
 
-    public ComponentStorage() {
+    public ComponentStorage(Class<E> arrayCreator) {
+        this.arrayCreator = arrayCreator;
         initEmpty();
     }
 
-    public ComponentStorage(int[] entities, E[] components) {
+    public ComponentStorage(Class<E> arrayCreator, int[] entities, E[] components) {
+        this.arrayCreator = arrayCreator;
         final int count = entities.length;
         if(count == 0) {
             initEmpty();
@@ -40,7 +44,7 @@ public class ComponentStorage<E> {
 
     private void initEmpty() {
         lookup = new SparseArray<>();
-        components = (E[])(new Object[8]);
+        components = (E[])Array.newInstance(arrayCreator, 8);
         entities = new int[8];
         size = 0;
         capacity = 8;
@@ -161,17 +165,23 @@ public class ComponentStorage<E> {
     }
 
     /**
-     * @return All components stored in this ComponentStorage
+     * @return All components stored in this ComponentStorage.
+     * Note the array might be longer than the number of components.
      */
     public E[] getAllComponents() {
         return components;
     }
 
     /**
-     * @return An array of entities where the entity at each index owns the component at the same index
+     * @return An array of entities where the entity at each index owns the component at the same index.
+     * Note the array might be longer than the number of components.
      */
     public int[] getAllEntities() {
         return entities;
+    }
+
+    public int size() {
+        return size;
     }
 
     /**
@@ -204,7 +214,7 @@ public class ComponentStorage<E> {
 
     private void increaseCapacity() {
         capacity = capacity + (capacity >> 1);
-        final E[] newComponents = (E[])(new Object[capacity]);
+        final E[] newComponents = (E[])Array.newInstance(arrayCreator, capacity);
         final int oldSize = size;
         final E[] oldComponents = components;
         for(int i = 0; i != oldSize; ++i) {

@@ -16,8 +16,8 @@ public class GeometrySystem {
     private final ComponentStorage<Sprite> transparentSpriteComponentStorage;
 
     public GeometrySystem() {
-        spriteComponentStorage = new ComponentStorage<>();
-        transparentSpriteComponentStorage = new ComponentStorage<>();
+        spriteComponentStorage = new ComponentStorage<>(Sprite.class);
+        transparentSpriteComponentStorage = new ComponentStorage<>(Sprite.class);
     }
 
     public GeometrySystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
@@ -33,7 +33,7 @@ public class GeometrySystem {
             final int oldEntity = save.readInt();
             entities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
         }
-        spriteComponentStorage = new ComponentStorage<>(entities, sprites);
+        spriteComponentStorage = new ComponentStorage<>(Sprite.class, entities, sprites);
 
         final int transparentSpriteCount = save.readInt();
         Sprite[] transparentSprites = new Sprite[transparentSpriteCount];
@@ -45,7 +45,7 @@ public class GeometrySystem {
             final int oldEntity = save.readInt();
             entities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
         }
-        transparentSpriteComponentStorage = new ComponentStorage<>(transparentEntities, transparentSprites);
+        transparentSpriteComponentStorage = new ComponentStorage<>(Sprite.class, transparentEntities, transparentSprites);
     }
 
     public void update(Engine engine) {
@@ -62,14 +62,14 @@ public class GeometrySystem {
 
             //create geometry and add it to the buffer
             int spritesOffset = geometryBuffer.getCurrentMeshOffset();
-            int numberOfSprites = sprites.length;
-            for(Sprite sprite : sprites) {
-                geometryBuffer.drawSprite30(sprite);
+            int numberOfSprites = spriteComponentStorage.size();
+            for(int i = 0; i != numberOfSprites; ++i) {
+                geometryBuffer.drawSprite30(sprites[i]);
             }
             int transparentSpritesOffset = geometryBuffer.getCurrentMeshOffset();
-            int transparentNumberOfSprites = transparentSprites.length;
-            for(Sprite transparentSprite : transparentSprites) {
-                geometryBuffer.drawSprite30(transparentSprite);
+            int transparentNumberOfSprites = transparentSpriteComponentStorage.size();
+            for(int i = 0; i != transparentNumberOfSprites; ++i) {
+                geometryBuffer.drawSprite30(transparentSprites[i]);
             }
             geometryBuffer.finishGeneratingMeshes30();
 
@@ -94,14 +94,14 @@ public class GeometrySystem {
         } else {
             //create geometry and add it to the buffer
             int spritesOffset = geometryBuffer.getCurrentMeshOffset();
-            int numberOfSprites = sprites.length;
-            for(Sprite sprite : sprites) {
-                geometryBuffer.drawSprite20(sprite);
+            int numberOfSprites = spriteComponentStorage.size();
+            for(int i = 0; i != numberOfSprites; ++i) {
+                geometryBuffer.drawSprite20(sprites[i]);
             }
             int transparentSpritesOffset = geometryBuffer.getCurrentMeshOffset();
-            int transparentNumberOfSprites = transparentSprites.length;
-            for(Sprite sprite : transparentSprites) {
-                geometryBuffer.drawSprite20(sprite);
+            int transparentNumberOfSprites = transparentSpriteComponentStorage.size();
+            for(int i = 0; i != transparentNumberOfSprites; ++i) {
+                geometryBuffer.drawSprite20(transparentSprites[i]);
             }
 
             geometryBuffer.prepareToRenderMeshes(textureManager.getTextureHandle());
@@ -138,7 +138,7 @@ public class GeometrySystem {
 
         //keep the transparent sprites sorted
         final Sprite[] sprites = transparentSpriteComponentStorage.getAllComponents();
-        int index = sprites.length - 1;
+        int index = transparentSpriteComponentStorage.size() - 1;
         while(index != 0) {
             final int newIndex = index - 1;
             if((sprites[newIndex].positionY + sprites[newIndex].height) > (sprites[index].positionY + sprites[index].height)) {
@@ -156,31 +156,47 @@ public class GeometrySystem {
 
     public void save(DataOutputStream save) throws IOException {
         Sprite[] sprites = spriteComponentStorage.getAllComponents();
-        save.writeInt(sprites.length);
-        for(Sprite sprite : sprites) {
-            sprite.save(save);
+        final int spriteCount = spriteComponentStorage.size();
+        save.writeInt(spriteCount);
+        for(int i = 0; i != spriteCount; ++i) {
+            sprites[i].save(save);
         }
         int[] entities = spriteComponentStorage.getAllEntities();
-        for (int entity : entities) {
-            save.writeInt(entity);
+        for (int i = 0; i != spriteCount; ++i) {
+            save.writeInt(entities[i]);
         }
 
         Sprite[] transparentSprites = transparentSpriteComponentStorage.getAllComponents();
-        save.writeInt(transparentSprites.length);
-        for(Sprite sprite : transparentSprites) {
-            sprite.save(save);
+        final int transparentSpriteCount = spriteComponentStorage.size();
+        save.writeInt(transparentSpriteCount);
+        for(int i = 0; i != transparentSpriteCount; ++i) {
+            transparentSprites[i].save(save);
         }
         int[] transparentEntities = transparentSpriteComponentStorage.getAllEntities();
-        for (int entity : transparentEntities) {
-            save.writeInt(entity);
+        for (int i = 0; i != spriteCount; ++i) {
+            save.writeInt(transparentEntities[spriteCount]);
         }
     }
 
+    /**
+     * Note the array might be longer than the number of sprites
+     */
     public Sprite[] getSprites() {
         return spriteComponentStorage.getAllComponents();
     }
 
+    public int getSpriteCount() {
+        return spriteComponentStorage.size();
+    }
+
+    /**
+     * Note the array might be longer than the number of transparent sprites
+     */
     public Sprite[] getTransparentSprites() {
         return transparentSpriteComponentStorage.getAllComponents();
+    }
+
+    public int getTransparentSpriteCount() {
+        return transparentSpriteComponentStorage.size();
     }
 }

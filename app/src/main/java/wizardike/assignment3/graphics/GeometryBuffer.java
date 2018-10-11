@@ -455,7 +455,7 @@ public class GeometryBuffer implements Closeable {
     public void resize(int width, int height) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, colorTextureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB5_A1, width, height, 0,
-                GLES20.GL_RGB5_A1, GLES20.GL_UNSIGNED_BYTE, null);
+                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
     }
 
     @Override

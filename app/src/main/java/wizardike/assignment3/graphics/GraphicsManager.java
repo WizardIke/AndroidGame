@@ -251,7 +251,7 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
             while (waitReturn != GLES30.GL_ALREADY_SIGNALED && waitReturn != GLES30.GL_CONDITION_SATISFIED)
             {
                 waitReturn = GLES30.glClientWaitSync(frameSyncObjects[currentBufferIndex],
-                        GLES30.GL_SYNC_FLUSH_COMMANDS_BIT, 1);
+                        GLES30.GL_SYNC_FLUSH_COMMANDS_BIT, Long.MAX_VALUE);
             }
             GLES30.glDeleteSync(frameSyncObjects[currentBufferIndex]);
         }

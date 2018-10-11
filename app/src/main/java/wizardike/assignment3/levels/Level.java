@@ -51,7 +51,11 @@ public class Level {
         Sprite[][] spritesToRemap = new Sprite[2][];
         spritesToRemap[0] = geometrySystem.getSprites();
         spritesToRemap[1] = geometrySystem.getTransparentSprites();
-        spriteSheetSystem = new SpriteSheetSystem(save, engine, entityUpdater, spritesToRemap, new SpriteSheetSystem.Callback() {
+        final int[] spritesToRemapLength = new int[2];
+        spritesToRemapLength[0] = geometrySystem.getSpriteCount();
+        spritesToRemapLength[1] = geometrySystem.getTransparentSpriteCount();
+        spriteSheetSystem = new SpriteSheetSystem(save, engine, entityUpdater, spritesToRemap,
+                spritesToRemapLength, new SpriteSheetSystem.Callback() {
             @Override
             public void onLoadComplete(SpriteSheetSystem spriteSheetSystem) {
                 callback.onLoadComplete(Level.this);

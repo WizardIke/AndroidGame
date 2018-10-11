@@ -2,6 +2,7 @@ package wizardike.assignment3;
 
 import android.app.Activity;
 import android.net.Uri;
+import android.util.Log;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -66,7 +67,7 @@ public class Engine {
                         try {
                             loadWorld(playGameRequest.saveFile, new WorldLoader.Callback() {
                                 @Override
-                                public void onLoadComplete(World mainWorld) { //will be called on the graphics thread
+                                public void onLoadComplete(final World mainWorld) { //will be called on the graphics thread
                                     Engine.this.mainWorld = (MainWorld)mainWorld;
                                     graphicsManager.queueEvent(new Runnable() {
                                         @Override
@@ -164,6 +165,7 @@ public class Engine {
      * will eventually stop the game playing
      */
     public void playingEnded(final PlayGameRequest.GameState state) {
+        Log.i("Engine", "playingEnded called with state " + state);
         graphicsManager.queueEvent(new Runnable() {
             @Override
             public void run() {
