@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.content.res.Resources;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
-import android.os.Build;
 
 import java.io.Closeable;
 import java.nio.Buffer;
@@ -56,7 +55,7 @@ public class GeometryBuffer implements Closeable {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, colorTextureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB5_A1, width, height, 0,
-                GLES20.GL_RGB5_A1, GLES20.GL_UNSIGNED_BYTE, null);
+                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
         //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
@@ -88,11 +87,13 @@ public class GeometryBuffer implements Closeable {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 
 
-        String sprite_vertex_source;
-        if(openGLVersion >= 30 && Build.VERSION.SDK_INT >= 18) {
+        int sprite_vertex_shader;
+        int sprite_opaque_frag_shader;
+        int sprite_transparent_frag_shader;
+        if(openGLVersion >= 30) {
             spriteBufferHandles = new int[2]; //increasing this to 3 buffers might increase performance at the cost of latency and memory
 
-            GLES30.glGenBuffers(2, spriteBufferHandles, 0);
+            GLES20.glGenBuffers(2, spriteBufferHandles, 0);
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, spriteBufferHandles[0]);
             GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, SPRITE_BATCH_SIZE * SPRITE_SIZE_IN_BYTES30, null,
                     GLES20.GL_DYNAMIC_DRAW);
@@ -100,23 +101,34 @@ public class GeometryBuffer implements Closeable {
             GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, SPRITE_BATCH_SIZE * SPRITE_SIZE_IN_BYTES30, null,
                     GLES20.GL_DYNAMIC_DRAW);
 
-            sprite_vertex_source = ShaderLoader.loadStringFromRawResource(resources, R.raw.geometry_v30);
+            sprite_vertex_shader = ShaderLoader.loadShaderFromResource(resources,
+                    R.raw.geometry_v30, GLES20.GL_VERTEX_SHADER);
+            sprite_opaque_frag_shader = ShaderLoader.loadShaderFromResource(resources,
+                    R.raw.sprite_opaque_geometry_f30, GLES20.GL_FRAGMENT_SHADER);
+            sprite_transparent_frag_shader = ShaderLoader.loadShaderFromResource(resources,
+                    R.raw.sprite_transparent_geometry_f30, GLES20.GL_FRAGMENT_SHADER);
         } else {
             spriteBuffer = ByteBuffer.allocateDirect(SPRITE_BATCH_SIZE * SPRITE_SIZE_IN_BYTES20)
                     .order(ByteOrder.nativeOrder())
                     .asFloatBuffer();
 
-            sprite_vertex_source = ShaderLoader.loadStringFromRawResource(resources, R.raw.geometry_v20);
+            sprite_vertex_shader = ShaderLoader.loadShaderFromResource(resources,
+                    R.raw.geometry_v20, GLES20.GL_VERTEX_SHADER);
+            sprite_opaque_frag_shader = ShaderLoader.loadShaderFromResource(resources,
+                    R.raw.sprite_opaque_geometry_f20, GLES20.GL_FRAGMENT_SHADER);
+            sprite_transparent_frag_shader = ShaderLoader.loadShaderFromResource(resources,
+                    R.raw.sprite_transparent_geometry_f20, GLES20.GL_FRAGMENT_SHADER);
         }
-        int sprite_vertex_shader = ShaderLoader.loadShader(GLES20.GL_VERTEX_SHADER, sprite_vertex_source);
-        String sprite_opaque_frag_source = ShaderLoader.loadStringFromRawResource(resources, R.raw.sprite_opaque_geometry_f);
-        int sprite_opaque_frag_shader = ShaderLoader.loadShader(GLES20.GL_FRAGMENT_SHADER, sprite_opaque_frag_source);
-        String sprite_transparent_frag_source = ShaderLoader.loadStringFromRawResource(resources, R.raw.sprite_transparent_geometry_f);
-        int sprite_transparent_frag_shader = ShaderLoader.loadShader(GLES20.GL_FRAGMENT_SHADER, sprite_transparent_frag_source);
 
         if(depthRenderBufferHandle == -1) { //depth textures as not supported
-            final int sprite_depth_frag_shader = ShaderLoader.loadShaderFromResource(resources,
-                    R.raw.sprite_depth_f, GLES20.GL_FRAGMENT_SHADER);
+            int sprite_depth_frag_shader;
+            if(openGLVersion >= 30) {
+                sprite_depth_frag_shader = ShaderLoader.loadShaderFromResource(resources,
+                        R.raw.sprite_depth_f30, GLES20.GL_FRAGMENT_SHADER);
+            } else {
+                sprite_depth_frag_shader = ShaderLoader.loadShaderFromResource(resources,
+                        R.raw.sprite_depth_f20, GLES20.GL_FRAGMENT_SHADER);
+            }
             spriteDepthProgram = GLES20.glCreateProgram();
             GLES20.glAttachShader(spriteDepthProgram, sprite_vertex_shader);
             GLES20.glAttachShader(spriteDepthProgram, sprite_depth_frag_shader);
@@ -130,18 +142,18 @@ public class GeometryBuffer implements Closeable {
         opaqueSpriteProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(opaqueSpriteProgram, sprite_vertex_shader);
         GLES20.glAttachShader(opaqueSpriteProgram, sprite_opaque_frag_shader);
-        GLES20.glLinkProgram(opaqueSpriteProgram);
+        ShaderLoader.linkProgram(opaqueSpriteProgram);
 
         transparentSpriteProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(transparentSpriteProgram, sprite_vertex_shader);
         GLES20.glAttachShader(transparentSpriteProgram, sprite_transparent_frag_shader);
-        GLES20.glLinkProgram(transparentSpriteProgram);
+        ShaderLoader.linkProgram(transparentSpriteProgram);
 
-        opaqueSpritePositionHandle = GLES20.glGetAttribLocation(opaqueSpriteProgram, "position");
+        opaqueSpritePositionHandle = GLES20.glGetAttribLocation(opaqueSpriteProgram, "positionAndWidthAndHeight");
         opaqueSpriteTexCoordinatesHandle = GLES20.glGetAttribLocation(opaqueSpriteProgram, "texCoordinates");
         opaqueSpriteCameraScaleAndOffsetHandle = GLES20.glGetUniformLocation(opaqueSpriteProgram, "scaleAndOffset");
 
-        transparentSpritePositionHandle = GLES20.glGetAttribLocation(transparentSpriteProgram, "position");
+        transparentSpritePositionHandle = GLES20.glGetAttribLocation(transparentSpriteProgram, "positionAndWidthAndHeight");
         transparentSpriteTexCoordinatesHandle = GLES20.glGetAttribLocation(transparentSpriteProgram, "texCoordinates");
         transparentSpriteCameraScaleAndOffsetHandle = GLES20.glGetUniformLocation(transparentSpriteProgram, "scaleAndOffset");
     }

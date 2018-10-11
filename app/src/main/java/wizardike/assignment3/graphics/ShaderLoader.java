@@ -2,6 +2,7 @@ package wizardike.assignment3.graphics;
 
 import android.content.res.Resources;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +23,24 @@ class ShaderLoader {
         int shader = GLES20.glCreateShader(type);
         GLES20.glShaderSource(shader, shaderCode);
         GLES20.glCompileShader(shader);
+
+        //debug checks
+        int[] compiled = new int[1];
+        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+        if (compiled[0] == 0) {
+            Log.e("ShaderLoader", GLES20.glGetShaderInfoLog(shader));
+        }
+
         return shader;
+    }
+
+    public static void linkProgram(int program) {
+        GLES20.glLinkProgram(program);
+        int[] status = new int[1];
+        GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, status, 0);
+        if (status[0] == GLES20.GL_FALSE) {
+            Log.e("ShaderLoader", GLES20.glGetProgramInfoLog(program));
+        }
     }
 
     public static int loadShaderFromResource(Resources resources, int resId, int shaderType) {

@@ -30,26 +30,32 @@ public class LightBuffer {
     private final int lightPositionUniformLocation;
     private final int lightColorUniformLocation;
     private final int oneOverWidthAndHeightUniformLocation;
+    private final int baseTextureUniformLocation;
+    private final int lightTextureUniformLocation;
 
     private final int shadowProgram;
     private final int shadowScaleAndOffsetUniformLocation;
     private final int shadowPositionLocation;
     private final int shadowHeightAndColorLocation;
+    private final int shadowOneOverWidthAndHeightUniformLocation;
 
     private FloatBuffer shadowMeshes;
 
     private boolean isFirstLight;
+    private int width, height;
 
     LightBuffer(int width, int height, Resources resources, int depthTextureHandle,
                 boolean supportsDepthTexture) {
         this.depthTextureHandle = depthTextureHandle;
+        this.width = width;
+        this.height = height;
         int[] temp = new int[1];
         //make the light texture
         GLES20.glGenTextures(1, temp, 0);
         lightTextureHandle = temp[0];
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, lightTextureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, width, height, 0,
-                GLES20.GL_RGB565, GLES20.GL_UNSIGNED_BYTE, null);
+                GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);
         //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
@@ -60,6 +66,7 @@ public class LightBuffer {
         //make the frame buffer
         GLES20.glGenFramebuffers(1, temp, 0);
         lightFrameBufferHandle = temp[0];
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, lightFrameBufferHandle);
         GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
                 GLES20.GL_TEXTURE_2D, lightTextureHandle, 0);
 
@@ -75,16 +82,13 @@ public class LightBuffer {
         applyLightProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(applyLightProgram, lighting_vertex_shader);
         GLES20.glAttachShader(applyLightProgram, lighting_frag_shader);
-        GLES20.glLinkProgram(applyLightProgram);
+        ShaderLoader.linkProgram(applyLightProgram);
 
         cameraUniformLocation = GLES20.glGetUniformLocation(applyLightProgram, "scaleAndOffset");
         oneOverWidthAndHeightUniformLocation = GLES20.glGetUniformLocation(applyLightProgram,
                 "oneOverScreenWidthAndHeight");
-        GLES20.glUniform2f(oneOverWidthAndHeightUniformLocation, 1.0f / width, 1.0f / height);
-        int baseTextureUniformLocation = GLES20.glGetUniformLocation(applyLightProgram, "baseTexture");
-        int lightTextureUniformLocation = GLES20.glGetUniformLocation(applyLightProgram, "lightAmountTexture");
-        GLES20.glUniform1i(baseTextureUniformLocation, 0);
-        GLES20.glUniform1i(lightTextureUniformLocation, 1);
+        baseTextureUniformLocation = GLES20.glGetUniformLocation(applyLightProgram, "baseTexture");
+        lightTextureUniformLocation = GLES20.glGetUniformLocation(applyLightProgram, "lightAmountTexture");
         lightPositionUniformLocation = GLES20.glGetUniformLocation(applyLightProgram, "lightPosition");
         lightColorUniformLocation = GLES20.glGetUniformLocation(applyLightProgram, "lightColor");
 
@@ -97,7 +101,7 @@ public class LightBuffer {
         color3DProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(color3DProgram, color3d_vertex_shader);
         GLES20.glAttachShader(color3DProgram, color3d_frag_shader);
-        GLES20.glLinkProgram(color3DProgram);
+        ShaderLoader.linkProgram(color3DProgram);
 
         color3DColorLocation = GLES20.glGetAttribLocation(color3DProgram, "color");
         color3DCameraUniformLocation = GLES20.glGetUniformLocation(color3DProgram, "scaleAndOffset");
@@ -117,11 +121,13 @@ public class LightBuffer {
         shadowProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(shadowProgram, shadow_vertex_shader);
         GLES20.glAttachShader(shadowProgram, shadow_frag_shader);
-        GLES20.glLinkProgram(shadowProgram);
+        ShaderLoader.linkProgram(shadowProgram);
 
         shadowScaleAndOffsetUniformLocation = GLES20.glGetUniformLocation(shadowProgram, "scaleAndOffset");
         shadowPositionLocation = GLES20.glGetAttribLocation(shadowProgram, "position");
         shadowHeightAndColorLocation = GLES20.glGetAttribLocation(shadowProgram, "heightAndColor");
+        shadowOneOverWidthAndHeightUniformLocation = GLES20.glGetUniformLocation(shadowProgram,
+                "oneOverScreenWidthAndHeight");
 
 
         shadowMeshes = ByteBuffer.allocateDirect(MAX_SHADOWS * BYTES_PER_SHADOW + BYTES_PER_LIGHT)
@@ -164,6 +170,7 @@ public class LightBuffer {
         GLES20.glBlendColor(1.0f, 1.0f, 1.0f, 1.0f);
         GLES20.glUniform4f(shadowScaleAndOffsetUniformLocation, camera.scaleX, camera.scaleY,
                 -camera.positionX, -camera.positionY);
+        GLES20.glUniform2f(shadowOneOverWidthAndHeightUniformLocation, 1.0f / width, 1.0f / height);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, depthTextureHandle);
     }
@@ -996,9 +1003,12 @@ public class LightBuffer {
         }
 
         GLES20.glUseProgram(applyLightProgram);
+        GLES20.glUniform2f(oneOverWidthAndHeightUniformLocation, 1.0f / width, 1.0f / height);
         GLES20.glUniform4f(cameraUniformLocation, camera.scaleX * light.radius,
                 camera.scaleY * light.radius, -camera.positionX, -camera.positionY);
-        GLES20.glUniform3f(lightPositionUniformLocation, light.positionX, light.positionX, light.positionZ);
+        GLES20.glUniform1i(baseTextureUniformLocation, 0);
+        GLES20.glUniform1i(lightTextureUniformLocation, 1);
+        GLES20.glUniform3f(lightPositionUniformLocation, light.positionX, light.positionY, light.positionZ);
         GLES20.glUniform3f(lightColorUniformLocation, light.colorR, light.colorG, light.colorB);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -1033,7 +1043,8 @@ public class LightBuffer {
     public void resize(int width, int height) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, lightTextureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, width, height, 0,
-                GLES20.GL_RGB565, GLES20.GL_UNSIGNED_BYTE, null);
-        GLES20.glUniform2f(oneOverWidthAndHeightUniformLocation, 1.0f / width, 1.0f / height);
+                GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);
+        this.width = width;
+        this.height = height;
     }
 }

@@ -68,8 +68,13 @@ public class Engine {
                                 @Override
                                 public void onLoadComplete(World mainWorld) { //will be called on the graphics thread
                                     Engine.this.mainWorld = (MainWorld)mainWorld;
-                                    graphicsManager.addWorld(mainWorld);
-                                    loadingFinished();
+                                    graphicsManager.queueEvent(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            graphicsManager.addWorld(Engine.this.mainWorld);
+                                            loadingFinished();
+                                        }
+                                    });
                                 }
                             });
                         } catch (Exception e) {

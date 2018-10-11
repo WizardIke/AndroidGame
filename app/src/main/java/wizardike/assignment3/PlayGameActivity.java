@@ -79,12 +79,12 @@ public class PlayGameActivity extends AppCompatActivity {
         }
 
         engine.resume();
-        Log.e("PlayGameActivity", "Finished resuming");
+        Log.v("PlayGameActivity", "Finished resuming");
     }
 
     @Override
     protected void onPause() {
-        Log.e("PlayGameActivity", "Paused");
+        Log.v("PlayGameActivity", "Paused");
         super.onPause();
         engine.pause();
     }

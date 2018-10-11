@@ -63,7 +63,7 @@ public class TextureManager implements Closeable{
         textureHandle = temp[0];
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, textureSize, textureSize, 0,
-                GLES20.GL_RGB565, GLES20.GL_UNSIGNED_BYTE, null);
+                GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);
         //should probably be based on user settings
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);

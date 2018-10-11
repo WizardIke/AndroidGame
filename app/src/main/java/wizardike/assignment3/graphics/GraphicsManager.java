@@ -192,7 +192,7 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
 
             //resize/create 'fake' depth texture
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA4, width, height, 0,
-                    GLES20.GL_RGBA4, GLES20.GL_UNSIGNED_BYTE, null);
+                    GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
             //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
@@ -208,7 +208,7 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
             }
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, depthTextureHandle);
             GLES20.glTexImage2D (GLES20.GL_TEXTURE_2D, 0, GLES20.GL_DEPTH_COMPONENT16, width, height, 0,
-                    GLES20.GL_DEPTH_COMPONENT16, GLES20.GL_UNSIGNED_SHORT, null);
+                    GLES20.GL_DEPTH_COMPONENT, GLES20.GL_UNSIGNED_SHORT, null);
             //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
@@ -241,33 +241,6 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
 
     public interface Callback {
         void onLoadComplete(GraphicsManager graphicsManager);
-    }
-
-    public void loadWorlds(DataInputStream save, final Callback callback) throws IOException {
-        new WorldUpdatingSystem(save, engine, new WorldUpdatingSystem.Callback() {
-            @Override
-            public void onLoadComplete(final WorldUpdatingSystem worldUpdatingSystem) {
-                post(new Runnable() {
-                    @Override
-                    public void run() {
-                        for(World world : GraphicsManager.this.worldUpdatingSystem.getWorlds()) {
-                            worldUpdatingSystem.addWorld(world);
-                        }
-                        GraphicsManager.this.worldUpdatingSystem = worldUpdatingSystem;
-                        callback.onLoadComplete(GraphicsManager.this);
-
-                    }
-                });
-            }
-        });
-    }
-
-    public void saveWorlds(DataOutputStream save) throws IOException {
-        worldUpdatingSystem.save(save);
-    }
-
-    public void removeAllWorlds() {
-        worldUpdatingSystem.removeAllWorlds();
     }
 
     @TargetApi(18)
