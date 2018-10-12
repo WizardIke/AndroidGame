@@ -1,17 +1,21 @@
 package wizardike.assignment3;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 
-public class MainMenuActivity extends AppCompatActivity {
+/**
+ * Plays the games title sound track and manages fragments for the main menu
+ */
+public class MainMenuActivity extends AppCompatActivity implements MainMenuFragment.OnFragmentInteractionListener, SettingsFragment.OnFragmentInteractionListener {
     private static final int PLAY_GAME_REQUEST_CODE = 0;
 
     private AmbientMusicPlayer musicPlayer;
@@ -26,37 +30,28 @@ public class MainMenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         musicPlayer = new AmbientMusicPlayer(new int[]{R.raw.tropic_strike, R.raw.soliloquy}, this);
 
+        //create default preferences if the preferences haven't been created yet
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        int newVolumeInt = settings.getInt("music_volume", 50);
+        float newQuietness = (float)(Math.log(100 - newVolumeInt) / Math.log(100));
+        setMusicVolume(1 - newQuietness);
+
         setContentView(R.layout.activity_main_menu);
 
-        Button startButton = findViewById(R.id.start_button);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                File file = new File(getFilesDir(), "test465560783456187684805642087653456034");
-                Uri save = Uri.fromFile(file);
-                try {
-                    SaveFileManager.createSave(save);
-                    playGame(save);
-                } catch (IOException e) {
-                    Toast toast = Toast.makeText(MainMenuActivity.this, R.string.play_game_failed, Toast.LENGTH_SHORT);
-                    toast.show();
-                }
-            }
-        });
-
-        Button quitButton = findViewById(R.id.quit_button);
-        quitButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        FragmentManager fm = getSupportFragmentManager();
+        if(fm != null) {
+            MainMenuFragment fragment = new MainMenuFragment();
+            fm.beginTransaction()
+                    .add(R.id.fragment_container, fragment)
+                    .commit();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        musicPlayer.reset();
         musicPlayer.start();
     }
 
@@ -72,10 +67,13 @@ public class MainMenuActivity extends AppCompatActivity {
         musicPlayer.close();
     }
 
-    private void playGame(Uri location) {
-        Intent intent = new Intent(MainMenuActivity.this, PlayGameActivity.class);
+    public void playGame(Uri location) {
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        settings.edit().putString("last_saved_game", location.toString()).apply();
+
+        Intent intent = new Intent(this, PlayGameActivity.class);
         intent.setData(location);
-        MainMenuActivity.this.startActivityForResult(intent, PLAY_GAME_REQUEST_CODE);
+        startActivityForResult(intent, PLAY_GAME_REQUEST_CODE);
     }
 
     @Override
@@ -86,19 +84,48 @@ public class MainMenuActivity extends AppCompatActivity {
                     final Uri save = intent.getData();
                     if (save != null) {
                         SaveFileManager.deleteSave(save); //the user has finished playing this character
+
+                        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+                        settings.edit().remove("last_saved_game").apply();
                     }
                     //else the character has been suspended
                 }
             } else {
+                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+                settings.edit().remove("last_saved_game").apply();
+
                 Toast toast = Toast.makeText(this, R.string.play_game_failed, Toast.LENGTH_SHORT);
                 toast.show();
             }
         }
     }
 
-    /**
+    @Override
+    public void startNewGame() {
+        File file = new File(getFilesDir(), "test465560783456187684805642087653456034");
+        Uri save = Uri.fromFile(file);
+        try {
+            SaveFileManager.createSave(save);
+            playGame(save);
+        } catch (IOException e) {
+            Toast toast = Toast.makeText(MainMenuActivity.this, R.string.play_game_failed, Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+
+    @Override
+    public void quit() {
+        finish();
+    }
+
+    @Override
+    public void setMusicVolume(float newVolume) {
+        musicPlayer.setVolume(newVolume);
+    }
+
+    /*
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    public native String stringFromJNI();
+    //public native String stringFromJNI();
 }

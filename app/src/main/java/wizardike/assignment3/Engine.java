@@ -68,7 +68,9 @@ public class Engine {
                             loadWorld(playGameRequest.saveFile, new WorldLoader.Callback() {
                                 @Override
                                 public void onLoadComplete(final World mainWorld) { //will be called on the graphics thread
-                                    Engine.this.mainWorld = (MainWorld)mainWorld;
+                                    synchronized (Engine.this) {
+                                        Engine.this.mainWorld = (MainWorld) mainWorld;
+                                    }
                                     graphicsManager.queueEvent(new Runnable() {
                                         @Override
                                         public void run() {
@@ -154,10 +156,14 @@ public class Engine {
 
     public void pause() {
         graphicsManager.onPause();
-        try {
-            save(playGameRequest.saveFile);
-        } catch (Exception e) {
-            playingEnded(PlayGameRequest.GameState.error);
+        synchronized (this) {
+            if(mainWorld != null) {
+                try {
+                    save(playGameRequest.saveFile);
+                } catch (Exception e) {
+                    playingEnded(PlayGameRequest.GameState.error);
+                }
+            }
         }
     }
 
@@ -165,7 +171,11 @@ public class Engine {
      * will eventually stop the game playing
      */
     public void playingEnded(final PlayGameRequest.GameState state) {
-        Log.i("Engine", "playingEnded called with state " + state);
+        if(state == PlayGameRequest.GameState.error) {
+            Log.e("Engine", "playingEnded called with state " + state);
+        } else {
+            Log.i("Engine", "playingEnded called with state " + state);
+        }
         graphicsManager.queueEvent(new Runnable() {
             @Override
             public void run() {

@@ -173,7 +173,7 @@ public class GeometrySystem {
             transparentSprites[i].save(save);
         }
         int[] transparentEntities = transparentSpriteComponentStorage.getAllEntities();
-        for (int i = 0; i != spriteCount; ++i) {
+        for (int i = 0; i != transparentSpriteCount; ++i) {
             save.writeInt(transparentEntities[spriteCount]);
         }
     }

@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
+import wizardike.assignment3.entities.EntityAllocator;
 import wizardike.assignment3.entities.EntityUpdater;
 import wizardike.assignment3.geometry.Vector4;
 import wizardike.assignment3.graphics.Sprite;
@@ -26,11 +27,17 @@ public class SpriteSheetSystem {
         spriteSheetComponentStorage = new ComponentStorage<>(SpriteSheet.class);
     }
 
-    public SpriteSheetSystem(final DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
+    public SpriteSheetSystem(final DataInputStream save, final Engine engine, final EntityUpdater entityUpdater,
                              final Sprite[][] spritesToRemap, final int[] spritesToRemapLength, final Callback callback) throws IOException {
+
+        final int spriteSheetCount = save.readInt();
+        if(spriteSheetCount == 0) {
+            spriteSheetComponentStorage = new ComponentStorage<>(SpriteSheet.class);
+            callback.onLoadComplete(this);
+            return;
+        }
         //load sprite sheets and create remapping table
         final HashMap<Vector4, Vector4> remappingTable = new HashMap<>();
-        final int spriteSheetCount = save.readInt();
         final SpriteSheet[] spriteSheets = new SpriteSheet[spriteSheetCount];
         final SpriteSheetLoader.Callback componentLoadedCallback = new SpriteSheetLoader.Callback() {
             private AtomicInteger loadedCount = new AtomicInteger(0);
@@ -40,10 +47,11 @@ public class SpriteSheetSystem {
                 if(loadedCount.incrementAndGet() == spriteSheetCount) {
                     remapSprites(remappingTable, spritesToRemap, spritesToRemapLength);
 
+                    final EntityAllocator entityAllocator = engine.getEntityAllocator();
                     final int[] entities = new int[spriteSheetCount];
                     for(int i = 0; i != spriteSheetCount; ++i) {
                         try {
-                            entities[i] = save.readInt();
+                            entities[i] = entityUpdater.getEntity(save.readInt(), entityAllocator);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

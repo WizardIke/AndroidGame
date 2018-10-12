@@ -41,11 +41,8 @@ public class AmbientMusicPlayer implements /*AutoCloseable*/ Closeable, MediaPla
         mediaPlayer.setOnCompletionListener(this);
     }
 
-    public void reset() {
-        mediaPlayer.reset();
-    }
-
     public void start() {
+        mediaPlayer.reset();
         playNextMusic();
     }
 
@@ -109,5 +106,9 @@ public class AmbientMusicPlayer implements /*AutoCloseable*/ Closeable, MediaPla
         } else {
             mLastFileIDIndex = (int)(Math.random() * mFileIDs.length);
         }
+    }
+
+    public void setVolume(float volume) {
+        mediaPlayer.setVolume(volume, volume);
     }
 }

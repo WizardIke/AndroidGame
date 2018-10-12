@@ -95,5 +95,6 @@ public class Level {
         collisionSystem.save(save);
         geometrySystem.save(save);
         lightingSystem.save(save);
+        spriteSheetSystem.save(save);
     }
 }

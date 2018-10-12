@@ -2,6 +2,8 @@
     <string name="app_name">Assignment3</string>
     <string name="play_game_failed">Playing the game failed</string>
 
+    <string name="main_menu_image_description">Background image of a cave</string>
+
     <string name="continueText">Continue</string>
     <string name="newGame">New Game</string>
     <string name="load">Load Game</string>

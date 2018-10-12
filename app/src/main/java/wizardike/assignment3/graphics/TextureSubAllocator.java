@@ -19,15 +19,17 @@ public class TextureSubAllocator {
     public Vector4 allocate() {
         --freeCount;
         final int index = freeList[freeCount];
-        float offsetX = (float)(index % widthAndHeight) / (0.5f * widthAndHeight) - 1.0f;
-        float offsetY = (float)(index / widthAndHeight) / (0.5f * widthAndHeight) - 1.0f;
-        float size = 2.0f / widthAndHeight;
+        float offsetX = (float)(index % widthAndHeight) / widthAndHeight;
+        float offsetY = (float)(index / widthAndHeight) / widthAndHeight;
+        float size = 1.0f / widthAndHeight;
 
-        return new Vector4(offsetX, offsetY, size, size);
+        return new Vector4(offsetX, 1.0f - offsetY - size, size, size);
     }
     public void deallocate(Vector4 textureCoordinates) {
-        final int index = (int)(((textureCoordinates.getX() + 1.0f) * (0.5f * widthAndHeight))
-                + ((textureCoordinates.getY() + 1.0f) * (0.5f * widthAndHeight) * widthAndHeight));
+        float size = 1.0f / widthAndHeight;
+        float offsetY = 1.0f - (textureCoordinates.getY() + size);
+        final int index = (int)((textureCoordinates.getX() * widthAndHeight)
+                + (offsetY * widthAndHeight * widthAndHeight));
         freeList[freeCount] = index;
         ++freeCount;
     }

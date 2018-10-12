@@ -123,8 +123,8 @@ public class TextureManager implements Closeable{
                                 textureWidthAndWight, true);
                         bitmap.recycle();
                         //copy image to texture
-                        int offsetX = (int)((textureCoordinates.getX() + 1.0f) * 0.5f * textureSize);
-                        int offsetY = (int)((textureCoordinates.getY() + 1.0f) * 0.5f * textureSize);
+                        int offsetX = (int)(textureCoordinates.getX() * textureSize);
+                        int offsetY = (int)((1.0f - textureCoordinates.getY()) * textureSize - textureWidthAndWight);
                         GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
                         resizedBitmap.recycle();
                         synchronized (TextureManager.this) {
@@ -162,8 +162,8 @@ public class TextureManager implements Closeable{
                     textureWidthAndWight, true);
             bitmap.recycle();
             final Vector4 textureCoordinates = descriptor.textureCoordinates;
-            final int offsetX = (int)((textureCoordinates.getX() + 1.0f) * 0.5f * textureSize);
-            final int offsetY = (int)((textureCoordinates.getY() + 1.0f) * 0.5f * textureSize);
+            final int offsetX = (int)(textureCoordinates.getX() * textureSize);
+            final int offsetY = (int)((1.0f - textureCoordinates.getY()) * textureSize - textureWidthAndWight);
             GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
             resizedBitmap.recycle();
         }
