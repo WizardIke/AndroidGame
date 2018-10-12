@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="texture_detail_names">
+        <item>High</item>
+        <item>Medium</item>
+        <item>Low</item>
+    </string-array>
+
+    <string-array name="texture_detail_values">
+        <item>2048</item>
+        <item>1024</item>
+        <item>512</item>
+    </string-array>
+</resources>

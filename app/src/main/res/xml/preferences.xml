@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <android.support.v7.preference.ListPreference
+        android:defaultValue="1024"
+        android:entries="@array/texture_detail_names"
+        android:entryValues="@array/texture_detail_values"
+        android:key="texture_detail_preference"
+        android:summary="Increasing the texture detail will make the game look less blurry, however, it uses more memory."
+        android:title="Texture Detail" />
+    <android.support.v7.preference.CheckBoxPreference
+        android:defaultValue="true"
+        android:key="use_bilinear_filtering"
+        android:summary="Bilinear filtering smooths textures making them look less pixelated. Turning it off will increase performance."
+        android:persistent="true"
+        android:title="Use Bilinear Filtering" />
+    <android.support.v7.preference.SeekBarPreference
+        android:key="music_volume"
+        android:title="Music volume"
+        android:defaultValue="50"
+        android:max="100"
+        />
+    <android.support.v7.preference.SeekBarPreference
+        android:key="sound_effects_volume"
+        android:title="Sound Effects volume"
+        android:defaultValue="50"
+        android:max="100"
+        />
+</android.support.v7.preference.PreferenceScreen>
