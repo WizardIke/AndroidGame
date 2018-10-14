@@ -11,4 +11,13 @@
         <item>1024</item>
         <item>512</item>
     </string-array>
+
+    <string-array name="player_classes">
+        <item>fire mage</item>
+        <item>necromancer</item>
+    </string-array>
+
+    <string-array name="races">
+        <item>human</item>
+    </string-array>
 </resources>

@@ -3,10 +3,10 @@ package wizardike.assignment3;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceManager;
 import android.widget.Toast;
 
 import java.io.File;
@@ -15,7 +15,11 @@ import java.io.IOException;
 /**
  * Plays the games title sound track and manages fragments for the main menu
  */
-public class MainMenuActivity extends AppCompatActivity implements MainMenuFragment.OnFragmentInteractionListener, SettingsFragment.OnFragmentInteractionListener {
+public class MainMenuActivity extends AppCompatActivity implements
+        MainMenuFragment.OnFragmentInteractionListener,
+        SettingsFragment.OnFragmentInteractionListener,
+        LoadGameFragment.OnFragmentInteractionListener,
+        CharacterCreationFragment.OnFragmentInteractionListener {
     private static final int PLAY_GAME_REQUEST_CODE = 0;
 
     private AmbientMusicPlayer musicPlayer;
@@ -28,15 +32,10 @@ public class MainMenuActivity extends AppCompatActivity implements MainMenuFragm
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        musicPlayer = new AmbientMusicPlayer(new int[]{R.raw.tropic_strike, R.raw.soliloquy}, this);
+        musicPlayer = new AmbientMusicPlayer(MusicTypes.mainMenuTrack, this);
 
         //create default preferences if the preferences haven't been created yet
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        int newVolumeInt = settings.getInt("music_volume", 50);
-        float newQuietness = (float)(Math.log(100 - newVolumeInt) / Math.log(100));
-        setMusicVolume(1 - newQuietness);
 
         setContentView(R.layout.activity_main_menu);
 
@@ -52,6 +51,11 @@ public class MainMenuActivity extends AppCompatActivity implements MainMenuFragm
     @Override
     protected void onResume() {
         super.onResume();
+
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        int newVolumeInt = settings.getInt("music_volume", 50);
+        float newQuietness = (float)(Math.log(100 - newVolumeInt) / Math.log(100));
+        setMusicVolume(1 - newQuietness);
         musicPlayer.start();
     }
 
@@ -101,14 +105,20 @@ public class MainMenuActivity extends AppCompatActivity implements MainMenuFragm
     }
 
     @Override
-    public void startNewGame() {
-        File file = new File(getFilesDir(), "test465560783456187684805642087653456034");
+    public void startNewGame(String name, int playerClass, int race) {
+        File filesDir = getFilesDir();
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        int fileNumber = settings.getInt("fileName", 0);
+        String filename = String.valueOf(fileNumber);
+        ++fileNumber;
+        settings.edit().putInt("fileName", fileNumber).apply();
+        File file = new File(filesDir, filename);
         Uri save = Uri.fromFile(file);
         try {
-            SaveFileManager.createSave(save);
+            SaveFileManager.createSave(save, name, playerClass, race);
             playGame(save);
         } catch (IOException e) {
-            Toast toast = Toast.makeText(MainMenuActivity.this, R.string.play_game_failed, Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(MainMenuActivity.this, R.string.create_new_game_failed, Toast.LENGTH_SHORT);
             toast.show();
         }
     }

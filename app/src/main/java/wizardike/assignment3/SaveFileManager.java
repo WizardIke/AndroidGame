@@ -8,13 +8,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import wizardike.assignment3.components.PlayerInfo;
+
 public class SaveFileManager {
     private static final String TAG = "SaveFileManager";
 
-    public static void createSave(Uri saveFileUri) throws IOException {
+    public static void createSave(Uri saveFileUri, String name, int playerClass, int race) throws IOException {
         File saveFile = new File(saveFileUri.getPath());
         DataOutputStream save = new DataOutputStream(new FileOutputStream(saveFile));
         save.writeInt(0); //The state of the save is hasn't been played yet
+        new PlayerInfo(playerClass, race, name, 1).save(save);
         save.writeInt(0); //Start the game on dungeon level 1 i.e level with id of 0
         save.writeInt(0); //Zero levels have save data generated for them
         save.close();

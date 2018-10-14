@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Assignment3</string>
+
     <string name="play_game_failed">Playing the game failed</string>
+    <string name="create_new_game_failed">Creating a new game failed</string>
 
     <string name="main_menu_image_description">Background image of a cave</string>
 
@@ -9,4 +11,17 @@
     <string name="load">Load Game</string>
     <string name="settings">Settings</string>
     <string name="quit">Quit</string>
+
+    <string name="saved_game_description">%1$s, the level %2$d %3$s %4$s, last played %5$s</string>
+
+    <string name="name_input_hint">Name</string>
+    <string name="class_label">Class</string>
+    <string name="fire_mage_image_description">Fire mage image</string>
+    <string name="fire_mage">Fire mage</string>
+    <string name="necromancer_image_description">Necromancer image</string>
+    <string name="necromancer">Necromancer</string>
+
+    <string name="race_label">Race</string>
+    <string name="human_image_description">Human image</string>
+    <string name="human">Human</string>
 </resources>

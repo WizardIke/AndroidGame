@@ -28,3 +28,182 @@ License(s):
 
 File(s):
     * tropic_strike.mp3
+	
+
+Title:
+    In the cave
+
+Author:
+    Laure Hélène Vivaux
+
+URL:
+    https://www.artstation.com/artwork/1GDme
+
+License(s):
+
+File(s):
+    * laure_helene_vivaux_lumiere_ombre_v3.jpg
+	
+	
+Title:
+    Radakan - Old Crypt
+
+Author:
+    Janne Hanhisuanto
+
+URL:
+    http://opengameart.org/content/radakan-old-crypt
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * radakan_old_crypt.ogg
+	
+	
+Title:
+    The Adventure Begins
+
+Author:
+    Bart Kelsey
+
+URL:
+    http://opengameart.org/content/adventure-begins
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * little_town_orchestral.ogg
+	
+	
+Title:
+    Woodland Fantasy
+
+Author:
+    Matthew Pablo
+
+URL:
+    http://opengameart.org/content/woodland-fantasy
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Woodland_Fantasy.mp3
+	
+	
+Title:
+    Dream Raid (Cinematic Action Soundtrack)
+
+Author:
+    Matthew Pablo
+
+URL:
+    http://opengameart.org/content/dream-raid-cinematic-action-soundtrack
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Dream_Raid_Part_II.ogg
+	
+	
+Title:
+    Town Theme RPG
+
+Author:
+    Alex Smith
+
+URL:
+    http://opengameart.org/content/town-theme-rpg
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * TownTheme.ogg
+
+
+Title:
+    It's Our Battle
+
+Author:
+    Telaron
+
+URL:
+    http://opengameart.org/content/its-our-battle
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Its_our_battle.ogg
+	
+	
+Title:
+    Unused music
+
+Author:
+    Александр
+
+URL:
+    http://opengameart.org/content/darkrainynight-ambience
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Brirfing_theme.mp3
+    * Track_1.ogg
+    * demo_track_1.mp3
+	
+	
+
+Title:
+    Heroic Demise [Updated Version]
+
+Author:
+    Matthew Pablo
+
+URL:
+    http://opengameart.org/content/heroic-demise-updated-version
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Heroic_Demise_New.mp3
+	
+	
+Title:
+    Battle Theme A
+
+Author:
+    Alex Smith
+
+URL:
+    http://opengameart.org/content/battle-theme-a
+
+License(s):
+    * CC0 ( https://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * battleThemeA.mp3
+	
+	
+Title:
+    Orchestral Epic Fantasy Music
+
+Author:
+    Zefz
+
+URL:
+    http://opengameart.org/content/orchestral-epic-fantasy-music
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+
+File(s):
+    * DarkWinds.OGG

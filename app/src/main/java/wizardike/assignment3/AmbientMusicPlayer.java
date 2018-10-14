@@ -64,14 +64,19 @@ public class AmbientMusicPlayer implements /*AutoCloseable*/ Closeable, MediaPla
 
     private void playNextMusic() {
         int resourceIDIndex;
-        if(Build.VERSION.SDK_INT >= 21) {
-            resourceIDIndex = ThreadLocalRandom.current().nextInt(0, mFileIDs.length - 1);
+        if(mFileIDs.length == 1){
+            resourceIDIndex = 0;
         } else {
-            resourceIDIndex = (int)(Math.random() * mFileIDs.length - 1);
+            if(Build.VERSION.SDK_INT >= 21) {
+                resourceIDIndex = ThreadLocalRandom.current().nextInt(0, mFileIDs.length - 1);
+            } else {
+                resourceIDIndex = (int)(Math.random() * mFileIDs.length - 1);
+            }
+            if(resourceIDIndex == mLastFileIDIndex) {
+                resourceIDIndex = mFileIDs.length - 1;
+            }
         }
-        if(resourceIDIndex == mLastFileIDIndex) {
-            resourceIDIndex = mFileIDs.length - 1;
-        }
+
         mLastFileIDIndex = resourceIDIndex;
         final int resourceID = mFileIDs[resourceIDIndex];
         try {

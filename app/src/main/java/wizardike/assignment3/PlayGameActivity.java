@@ -1,8 +1,10 @@
 package wizardike.assignment3;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,12 +12,15 @@ import android.util.Log;
 import android.view.View;
 
 public class PlayGameActivity extends AppCompatActivity {
+    private AmbientMusicPlayer musicPlayer;
     private Engine engine;
-    private Uri saveFile = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        musicPlayer = new AmbientMusicPlayer(MusicTypes.peacefulTracks, this);
+
         setContentView(R.layout.activity_play_game);
 
         ActionBar actionbar = getSupportActionBar();
@@ -25,6 +30,7 @@ public class PlayGameActivity extends AppCompatActivity {
 
         boolean succeeded = false;
         Intent intent = getIntent();
+        Uri saveFile = null;
         if(intent != null) {
             saveFile = intent.getData();
             if(saveFile != null) {
@@ -32,15 +38,16 @@ public class PlayGameActivity extends AppCompatActivity {
                     engine = new Engine(this, new PlayGameRequest(saveFile) {
                         @Override
                         public void onPlayingEnded(final GameState state) {
+                            final Uri saveFile = this.saveFile;
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     switch(state) {
                                         case error:
-                                            onGameError();
+                                            onGameError(saveFile);
                                             break;
                                         case finished:
-                                            onGameFinished();
+                                            onGameFinished(saveFile);
                                             break;
                                         case suspended:
                                             onGameSuspended();
@@ -49,13 +56,18 @@ public class PlayGameActivity extends AppCompatActivity {
                                 }
                             });
                         }
+
+                        @Override
+                        public void playMusic(int[] resourceIds) {
+                            musicPlayer.changeFileIDs(resourceIds);
+                        }
                     });
                     succeeded = true;
                 } catch (Exception e) {/*empty*/}
             }
         }
         if(!succeeded) {
-            onGameError();
+            onGameError(saveFile);
         }
 
         //default to successful run
@@ -67,6 +79,12 @@ public class PlayGameActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        int newVolumeInt = settings.getInt("music_volume", 50);
+        float newQuietness = (float)(Math.log(100 - newVolumeInt) / Math.log(100));
+        musicPlayer.setVolume(1 - newQuietness);
+        musicPlayer.start();
 
         if(Build.VERSION.SDK_INT >= 19) {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
@@ -86,17 +104,18 @@ public class PlayGameActivity extends AppCompatActivity {
     protected void onPause() {
         Log.v("PlayGameActivity", "Paused");
         super.onPause();
+        musicPlayer.stop();
         engine.pause();
     }
 
-    private void onGameError() {
+    private void onGameError(Uri saveFile) {
         Intent intent = new Intent();
         intent.setData(saveFile);
         setResult(RESULT_CANCELED, intent);
         finish();
     }
 
-    private void onGameFinished() {
+    private void onGameFinished(Uri saveFile) {
         Intent intent = new Intent();
         intent.setData(saveFile);
         setResult(RESULT_OK, intent);

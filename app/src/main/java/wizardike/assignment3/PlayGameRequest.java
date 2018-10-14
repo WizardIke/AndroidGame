@@ -15,4 +15,6 @@ public abstract class PlayGameRequest {
     }
 
     public abstract void onPlayingEnded(GameState state);
+
+    public abstract void playMusic(int[] resourceIds);
 }

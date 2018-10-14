@@ -1,5 +1,6 @@
 package wizardike.assignment3;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -15,6 +16,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import java.io.File;
 
 
 /**
@@ -57,11 +60,33 @@ public class MainMenuFragment extends Fragment {
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mListener.startNewGame();
+                FragmentManager fm = getFragmentManager();
+                if(fm != null) {
+                    CharacterCreationFragment fragment = new CharacterCreationFragment();
+                    fm.beginTransaction()
+                            .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
+                            .replace(R.id.fragment_container, fragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
             }
         });
 
         Button loadButton = view.findViewById(R.id.load_button);
+        loadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentManager fm = getFragmentManager();
+                if(fm != null) {
+                    LoadGameFragment fragment = new LoadGameFragment();
+                    fm.beginTransaction()
+                            .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
+                            .replace(R.id.fragment_container, fragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
+            }
+        });
 
         Button settingsButton = view.findViewById(R.id.settings_button);
         settingsButton.setOnClickListener(new View.OnClickListener() {
@@ -110,6 +135,17 @@ public class MainMenuFragment extends Fragment {
             } else {
                 continueButton.setVisibility(View.GONE);
             }
+
+            Button loadButton = view.findViewById(R.id.load_button);
+            Activity activity = getActivity();
+            if(activity != null) {
+                File dir = activity.getFilesDir();
+                if(dir.list().length == 0){
+                    loadButton.setVisibility(View.GONE);
+                } else {
+                    loadButton.setVisibility(View.VISIBLE);
+                }
+            }
         }
     }
 
@@ -141,7 +177,6 @@ public class MainMenuFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void startNewGame();
         void quit();
         void playGame(Uri location);
     }

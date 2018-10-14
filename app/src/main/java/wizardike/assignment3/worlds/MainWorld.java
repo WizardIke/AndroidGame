@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import wizardike.assignment3.Engine;
+import wizardike.assignment3.components.PlayerInfo;
 import wizardike.assignment3.entities.Player;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.levels.LevelStreamingManager;
@@ -15,6 +16,7 @@ public class MainWorld implements World {
     private int levelId;
     private Level level;
     private LevelStreamingManager levelStreamingManager;
+    private final PlayerInfo playerInfo;
 
     static void registerLoader() {
         WorldLoader.addLoader(id, new WorldLoader.Loader() {
@@ -29,6 +31,7 @@ public class MainWorld implements World {
     public MainWorld(DataInputStream save, final Engine engine,
                       final WorldLoader.Callback callback) throws IOException {
         final int saveState = save.readInt();
+        playerInfo = new PlayerInfo(save);
         levelId = save.readInt();
         levelStreamingManager = new LevelStreamingManager(engine, save);
         levelStreamingManager.loadLevel(levelId, new LevelStreamingManager.Request() {
@@ -37,7 +40,7 @@ public class MainWorld implements World {
                 MainWorld.this.level = level;
                 if(saveState == 0) {
                     //this is the first time this save has been loaded, create the player
-                    Player.create(engine, level);
+                    playerInfo.createPlayer(engine, level);
                 }
                 //the world has finished loading
                 callback.onLoadComplete(MainWorld.this);
@@ -62,6 +65,7 @@ public class MainWorld implements World {
     @Override
     public void save(DataOutputStream save) throws IOException {
         save.writeInt(1); //1 means the save has been loaded before
+        playerInfo.save(save);
         save.writeInt(levelId);
         levelStreamingManager.save(save);
     }
