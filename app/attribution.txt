@@ -14,6 +14,7 @@ File(s):
     * soliloquy.mp3
 
 
+	
 Title:
     Tropic Strike (Live Orchestra)
 
@@ -30,6 +31,7 @@ File(s):
     * tropic_strike.mp3
 	
 
+	
 Title:
     In the cave
 
@@ -43,6 +45,7 @@ License(s):
 
 File(s):
     * laure_helene_vivaux_lumiere_ombre_v3.jpg
+	
 	
 	
 Title:
@@ -61,6 +64,7 @@ File(s):
     * radakan_old_crypt.ogg
 	
 	
+	
 Title:
     The Adventure Begins
 
@@ -75,6 +79,7 @@ License(s):
 
 File(s):
     * little_town_orchestral.ogg
+	
 	
 	
 Title:
@@ -93,6 +98,7 @@ File(s):
     * Woodland_Fantasy.mp3
 	
 	
+	
 Title:
     Dream Raid (Cinematic Action Soundtrack)
 
@@ -107,6 +113,7 @@ License(s):
 
 File(s):
     * Dream_Raid_Part_II.ogg
+	
 	
 	
 Title:
@@ -124,6 +131,7 @@ License(s):
 File(s):
     * TownTheme.ogg
 
+	
 
 Title:
     It's Our Battle
@@ -139,6 +147,7 @@ License(s):
 
 File(s):
     * Its_our_battle.ogg
+	
 	
 	
 Title:
@@ -176,6 +185,7 @@ File(s):
     * Heroic_Demise_New.mp3
 	
 	
+	
 Title:
     Battle Theme A
 
@@ -190,6 +200,7 @@ License(s):
 
 File(s):
     * battleThemeA.mp3
+	
 	
 	
 Title:
@@ -207,3 +218,40 @@ License(s):
 
 File(s):
     * DarkWinds.OGG
+	
+	
+
+Title:
+    Wizard hat
+
+Author:
+    Evert
+
+URL:
+    https://opengameart.org/content/wizard-hat
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * fire_mage_icon.png
+	* necromancer_icon.png
+	
+	
+	
+Title:
+    Wizard hat
+
+Author:
+    Jessica Cox (zeldyn)
+
+URL:
+    https://opengameart.org/content/portrait-female-fighter
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+	* GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+	* GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * human_female.png
