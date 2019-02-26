@@ -65,6 +65,11 @@ public class WalkingAnimationSystem {
             walkingAnimations[i].save(save, spriteSheetRemappingTable, movementRemappingTable,
                     spriteRemappingTable);
         }
+
+        final int[] entities = walkingAnimationComponentStorage.getAllEntities();
+        for (int i = 0; i != walkingAnimationCount; ++i) {
+            save.writeInt(entities[i]);
+        }
     }
 
     public void update(Level level) {

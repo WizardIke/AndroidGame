@@ -1,4 +1,4 @@
-package wizardike.assignment3.physics.movement;
+package wizardike.assignment3.ai;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -7,6 +7,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 
 import wizardike.assignment3.AnalogStick;
+import wizardike.assignment3.physics.movement.Movement;
 
 /**
  * Created by Isaac on 31/08/2017.

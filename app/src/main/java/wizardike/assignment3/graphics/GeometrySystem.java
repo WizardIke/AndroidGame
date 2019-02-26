@@ -53,11 +53,12 @@ public class GeometrySystem {
     }
 
     public void update(Level level) {
+        final Camera camera = level.getCamera();
+        if(camera.position == null) return;
         Engine engine = level.getEngine();
         final GraphicsManager graphicsManager = engine.getGraphicsManager();
         final GeometryBuffer geometryBuffer = graphicsManager.getGeometryBuffer();
         final TextureManager textureManager = graphicsManager.getTextureManager();
-        final Camera camera = level.getCamera();
         final int currentBufferIndex = graphicsManager.getCurrentBufferIndex();
         final Sprite[] sprites = spriteComponentStorage.getAllComponents();
         final Sprite[] transparentSprites = transparentSpriteComponentStorage.getAllComponents();
@@ -173,7 +174,7 @@ public class GeometrySystem {
         }
 
         Sprite[] transparentSprites = transparentSpriteComponentStorage.getAllComponents();
-        final int transparentSpriteCount = spriteComponentStorage.size();
+        final int transparentSpriteCount = transparentSpriteComponentStorage.size();
         save.writeInt(transparentSpriteCount);
         for(int i = 0; i != transparentSpriteCount; ++i) {
             transparentSprites[i].save(save, remappingTable);

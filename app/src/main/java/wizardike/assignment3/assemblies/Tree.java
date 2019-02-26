@@ -10,7 +10,7 @@ import wizardike.assignment3.physics.Collision.CircleHitBox;
 public class Tree {
     public static int create(Level level, Vector2 position, float radius) {
         int entity = level.getEngine().getEntityAllocator().allocate();
-        level.getCollisionSystem().add(entity, new CircleHitBox(position, radius, Float.POSITIVE_INFINITY));
+        level.getCollisionSystem().addCollidable(entity, new CircleHitBox(position, radius, Float.POSITIVE_INFINITY));
         return entity;
     }
 }

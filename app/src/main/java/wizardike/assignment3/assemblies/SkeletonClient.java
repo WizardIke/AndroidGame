@@ -31,7 +31,7 @@ public class SkeletonClient {
         Vector2 position = new Vector2(posX, posY);
         level.getPositionSystem().addPosition(entity, position);
         BiteClient bite = new BiteClient(biteTime);
-        level.getCollisionSystem().add(entity, new TriggeredCircleHitBox(position, radius,
+        level.getCollisionSystem().addCollidable(entity, new TriggeredCircleHitBox(position, radius,
                 (float)(Math.random() * massRange + minMass), bite));
         level.getBasicAIControllerSystem().addBasicAIController(entity, new BasicAIController(speed));
         Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,

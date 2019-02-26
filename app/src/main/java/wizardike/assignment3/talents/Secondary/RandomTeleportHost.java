@@ -1,15 +1,5 @@
 package wizardike.assignment3.talents.Secondary;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
-import wizardike.assignment3.geometry.Vector2;
-import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
-import wizardike.assignment3.levels.Level;
-import wizardike.assignment3.networking.SystemIds;
-import wizardike.assignment3.talents.UserInterfaceSystem;
-
 /*
 public class RandomTeleportHost extends RandomTeleport {
     private static final int id = 9;

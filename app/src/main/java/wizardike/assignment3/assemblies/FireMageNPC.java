@@ -26,7 +26,7 @@ public class FireMageNPC {
 
     private final static float armorToughness = 0.1f;
     private static final float startingHealthRegen = 0.9f;
-    private static final float startingResistance = 0.2f;
+    private static final float startingResistance = 1.0f;
 
     public static int create(Level level, final float posX, final float posY, WalkingSpriteSheet spriteSheet) {
         int entity = level.getEngine().getEntityAllocator().allocate();
@@ -40,7 +40,7 @@ public class FireMageNPC {
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
-        level.getCollisionSystem().add(entity, circleHitBox);
+        level.getCollisionSystem().addCollidable(entity, circleHitBox);
         level.getFactionSystem().addFaction(entity, Faction.Mage);
         level.getCategorySystem().addCategory(entity, Category.Creature);
         Health health = new NPCHealth(new Resistances(startingResistance, startingResistance,
@@ -48,8 +48,8 @@ public class FireMageNPC {
                 startingResistance, startingResistance), armorToughness, startingMaxHealth, startingMaxHealth);
         level.getHealthSystem().addHealth(entity, health);
         level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
-        //TODO add spells
-        //TODO add movement controller component
+        //TODO addCollidable spells
+        //TODO addCollidable movement controller component
         return entity;
     }
 }

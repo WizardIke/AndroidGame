@@ -57,7 +57,7 @@ public class CollisionSystem {
         }
     }
 
-    public void add(int entity, Collidable collidable) {
+    public void addCollidable(int entity, Collidable collidable) {
         collidableComponentStorage.addComponent(entity, collidable);
     }
 

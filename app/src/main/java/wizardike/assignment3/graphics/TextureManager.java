@@ -48,7 +48,7 @@ public class TextureManager implements Closeable{
         }
     }
 
-    private int textureHandle;
+    private int textureHandle = -1;
     private SparseArray<Descriptor> descriptors = new SparseArray<>();
     private TextureSubAllocator textureSubAllocator = new TextureSubAllocator(4, 2);
     private Engine engine;
@@ -59,18 +59,6 @@ public class TextureManager implements Closeable{
         this.engine = engine;
         textureWidth = 1024 * 4;
         textureHeight = 1024 * 2;
-
-        int[] temp = new int[1];
-        GLES20.glGenTextures(1, temp, 0);
-        textureHandle = temp[0];
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, textureWidth, textureHeight, 0,
-                GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);
-        //should probably be based on user settings
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
     }
 
     int getTextureHandle() {
@@ -115,7 +103,7 @@ public class TextureManager implements Closeable{
                         engine.getGraphicsManager().getResources(),
                         textureId
                 );
-                engine.getGraphicsManager().post(new Runnable() {
+                engine.getGraphicsManager().queueEvent(new Runnable() {
                     @Override
                     public void run() {
                         //scale texture
@@ -127,7 +115,9 @@ public class TextureManager implements Closeable{
                         //copy image to texture
                         int offsetX = (int)(textureCoordinates.getX() * textureWidth);
                         int offsetY = (int)((1.0f - textureCoordinates.getY()) * textureHeight - textureWidthAndWight);
-                        GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
+                        if(textureHandle != -1) {
+                            GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
+                        }
                         resizedBitmap.recycle();
                         synchronized (TextureManager.this) {
                             Descriptor descriptor = descriptors.get(textureId);
@@ -151,6 +141,8 @@ public class TextureManager implements Closeable{
      * Must be called from the rendering thread.
      */
     public synchronized void reload() {
+        createTexture();
+
         final int textureWidthAndWight = textureWidth / textureSubAllocator.getWidth();
         final Resources resources = engine.getGraphicsManager().getResources();
 
@@ -169,5 +161,19 @@ public class TextureManager implements Closeable{
             GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
             resizedBitmap.recycle();
         }
+    }
+
+    private void createTexture() {
+        int[] temp = new int[1];
+        GLES20.glGenTextures(1, temp, 0);
+        textureHandle = temp[0];
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, textureWidth, textureHeight, 0,
+                GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);
+        //should probably be based on user settings
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
     }
 }

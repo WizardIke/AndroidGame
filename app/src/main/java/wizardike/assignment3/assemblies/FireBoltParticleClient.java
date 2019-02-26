@@ -30,7 +30,7 @@ public class FireBoltParticleClient {
         level.getFireBoltAnimationSystem().addFireBoltAnimation(entity, fireBoltAnimation);
         ExplodeClient explode = new ExplodeClient(position, dirX * speed, dirY * speed);
         TriggeredCircleHitBox triggeredCircleHitBox = new TriggeredCircleHitBox(position, radius, mass, explode);
-        level.getCollisionSystem().add(entity, triggeredCircleHitBox);
+        level.getCollisionSystem().addCollidable(entity, triggeredCircleHitBox);
         Faction faction = level.getFactionSystem().getFaction(caster);
         if(faction != null) {
             level.getFactionSystem().addFaction(entity, faction);

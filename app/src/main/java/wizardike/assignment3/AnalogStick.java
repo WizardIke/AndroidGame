@@ -13,7 +13,7 @@ public class AnalogStick extends AppCompatImageView {
         void stop(float directionX, float directionY);
     }
 
-    private OnRotationListener listener;
+    private OnRotationListener listener = null;
     private boolean validTouch;
     private float imageAngleInDegrees;
     private float previousAngleInDegrees;
@@ -66,7 +66,9 @@ public class AnalogStick extends AppCompatImageView {
                 if(distanceSquared <= halfWidth * halfWidth) {
                     previousAngleInDegrees = angle;
                     validTouch = true;
-                    listener.start(directionX, directionY);
+                    if(listener != null) {
+                        listener.start(directionX, directionY);
+                    }
                 } else {
                     validTouch = false;
                 }
@@ -77,7 +79,9 @@ public class AnalogStick extends AppCompatImageView {
                     float angleChange = angle - previousAngleInDegrees;
                     imageAngleInDegrees += angleChange;
                     setRotation(imageAngleInDegrees);
-                    listener.move(directionX, directionY);
+                    if(listener != null) {
+                        listener.move(directionX, directionY);
+                    }
                 }
                 break;
             }
@@ -86,7 +90,9 @@ public class AnalogStick extends AppCompatImageView {
                     float angleChange = angle - previousAngleInDegrees;
                     imageAngleInDegrees += angleChange;
                     setRotation(imageAngleInDegrees);
-                    listener.stop(directionX, directionY);
+                    if(listener != null) {
+                        listener.stop(directionX, directionY);
+                    }
                 }
                 validTouch = false;
                 break;

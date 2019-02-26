@@ -40,7 +40,7 @@ public class FireMageHost {
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
-        level.getCollisionSystem().add(entity, circleHitBox);
+        level.getCollisionSystem().addCollidable(entity, circleHitBox);
         level.getFactionSystem().addFaction(entity, Faction.Mage);
         level.getCategorySystem().addCategory(entity, Category.Creature);
         HealthHost health = new PlayerHealthHost(new Resistances(startingResistance, startingResistance,
@@ -49,9 +49,9 @@ public class FireMageHost {
                 startingMaxHealth);
         level.getHealthHostSystem().addHealth(entity, health);
         level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
-        level.getUserInterfaceSystem().addAttackTalent(entity, new FireBoltSpellHost(0.4f * 6.0f, 0.5f, 2.0f * 6.0f, 10.0f, spriteSheet));
-        //TODO add host spells
-        //TODO add host movement component
+        //level.getUserInterfaceSystem().addAttackTalent(entity, new FireBoltSpellHost(0.4f * 6.0f, 0.5f, 2.0f * 6.0f, 10.0f, spriteSheet));
+        //TODO addCollidable host spells
+        //TODO addCollidable host movement component
         return entity;
     }
 }

@@ -6,7 +6,6 @@ import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
 import wizardike.assignment3.graphics.SpriteSheets.WalkingSpriteSheet;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.networking.SystemIds;
-import wizardike.assignment3.talents.UserInterfaceSystem;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -87,9 +86,9 @@ public class FireBoltSpellHost extends FireBoltSpell {
                         int levelIndex = level.getEngine().getMainWorld().getIdOfLevel(level);
                         networkOut.writeInt(levelIndex);
                         networkOut.writeInt(SystemIds.userInterfaceSystem);
-                        UserInterfaceSystem userInterfaceSystem = level.getUserInterfaceSystem();
-                        networkOut.writeInt(UserInterfaceSystem.attack);
-                        networkOut.writeInt(userInterfaceSystem.indexOfAttackTalent(thisEntity, this));
+                        //UserInterfaceSystem userInterfaceSystem = level.getUserInterfaceSystem();
+                        //networkOut.writeInt(UserInterfaceSystem.attack);
+                        //networkOut.writeInt(userInterfaceSystem.indexOfAttackTalent(thisEntity, this));
                         networkOut.writeInt(activateSuccessful);
                         networkOut.writeFloat(directionX);
                         networkOut.writeFloat(directionY);

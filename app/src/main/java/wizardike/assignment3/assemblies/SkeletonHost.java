@@ -7,16 +7,11 @@ import wizardike.assignment3.faction.Faction;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.graphics.Sprite;
 import wizardike.assignment3.graphics.SpriteSheets.WalkingSpriteSheet;
-import wizardike.assignment3.health.SkeletonHealth;
 import wizardike.assignment3.health.SkeletonHealthHost;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.physics.Collision.CollisionHandlers.Bite;
-import wizardike.assignment3.physics.Collision.CollisionHandlers.BiteClient;
 import wizardike.assignment3.physics.Collision.TriggeredCircleHitBox;
 import wizardike.assignment3.physics.movement.Movement;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 
 /**
  * Created by Ike on 30/01/2017.
@@ -36,7 +31,7 @@ public class SkeletonHost {
         Vector2 position = new Vector2(posX, posY);
         level.getPositionHostSystem().addPosition(entity, position);
         Bite bite = new Bite(biteTime, biteDamage);
-        level.getCollisionSystem().add(entity, new TriggeredCircleHitBox(position, radius,
+        level.getCollisionSystem().addCollidable(entity, new TriggeredCircleHitBox(position, radius,
                 (float)(Math.random() * massRange + minMass), bite));
         level.getBasicAIControllerSystem().addBasicAIController(entity, new BasicAIController(speed));
         Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,

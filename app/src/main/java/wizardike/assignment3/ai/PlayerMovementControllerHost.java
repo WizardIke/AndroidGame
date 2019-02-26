@@ -1,8 +1,11 @@
-package wizardike.assignment3.physics.movement;
+package wizardike.assignment3.ai;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.List;
+
+import wizardike.assignment3.ai.PlayerMovementController;
+import wizardike.assignment3.physics.movement.Movement;
 
 public class PlayerMovementControllerHost extends PlayerMovementController {
     public PlayerMovementControllerHost(Movement movement, float maxSpeed) {

@@ -47,7 +47,7 @@ public class NecromancerHostPlayer {
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
-        level.getCollisionSystem().add(entity, circleHitBox);
+        level.getCollisionSystem().addCollidable(entity, circleHitBox);
         level.getFactionSystem().addFaction(entity, Faction.Mage);
         level.getCategorySystem().addCategory(entity, Category.Creature);
         HealthHost health = new PlayerHealthHost(new Resistances(startingFireResistance, startingColdResistance,
@@ -57,8 +57,8 @@ public class NecromancerHostPlayer {
         level.getHealthHostSystem().addHealth(entity, health);
         level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
         level.getCamera().position = position;
-        //TODO add host spells
-        //TODO add host movement controller component
+        //TODO addCollidable host spells
+        //TODO addCollidable host movement controller component
         return entity;
     }
 }

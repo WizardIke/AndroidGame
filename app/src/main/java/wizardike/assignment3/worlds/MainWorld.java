@@ -9,6 +9,7 @@ import java.util.IdentityHashMap;
 
 import wizardike.assignment3.Engine;
 import wizardike.assignment3.PlayerInfo;
+import wizardike.assignment3.assemblies.EntityLoadedCallback;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.levels.LevelStreamingManager;
 
@@ -38,6 +39,7 @@ public class MainWorld implements World {
         playerInfo = new PlayerInfo(save);
         levelId = save.readInt();
         levelStreamingManager = new LevelStreamingManager(engine, save);
+
         levelStreamingManager.loadLevel(levelId, new LevelStreamingManager.Request() {
             @Override
             protected void onLoadComplete(Level level) {
@@ -45,10 +47,17 @@ public class MainWorld implements World {
                 addLevel(levelId, level);
                 if(saveState == 0) {
                     //this is the first time this save has been loaded, create the player
-                    playerInfo.createPlayer(engine, level);
+                    playerInfo.createPlayer(engine, level, new EntityLoadedCallback() {
+                        @Override
+                        public void onLoadComplete(int mageEntity) {
+                            //the world has finished loading
+                            callback.onLoadComplete(MainWorld.this);
+                        }
+                    });
+                } else {
+                    //the world has finished loading
+                    callback.onLoadComplete(MainWorld.this);
                 }
-                //the world has finished loading
-                callback.onLoadComplete(MainWorld.this);
             }
         });
     }

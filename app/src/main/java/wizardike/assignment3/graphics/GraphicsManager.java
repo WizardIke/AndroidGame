@@ -96,6 +96,7 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
 
     public void setEngine(Engine engine) {
         this.engine = engine;
+        textureManager = new TextureManager(engine);
     }
 
     public int getOpenGlVersion() {

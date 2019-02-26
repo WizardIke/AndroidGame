@@ -42,5 +42,5 @@ public class Movement {
         saveData.writeFloat(currentSpeed);
     }
 
-    //TODO add message handling
+    //TODO addCollidable message handling
 }

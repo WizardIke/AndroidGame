@@ -10,7 +10,7 @@ import wizardike.assignment3.Engine;
 import wizardike.assignment3.geometry.Vector4;
 
 public class SpriteSheetLoader {
-    interface Callback {
+    public interface Callback {
         void onLoadComplete(SpriteSheet spriteSheet);
     }
     interface Loader {
@@ -25,6 +25,8 @@ public class SpriteSheetLoader {
     static {
         SkeletonSpriteSheet.registerLoader();
         NecromancerSpriteSheet.registerLoader();
+        FireMageSpriteSheet.registerLoader();
+        TreeSpriteSheet.registerLoader();
     }
 
     public static SpriteSheet load(int id, DataInputStream save, Engine engine,

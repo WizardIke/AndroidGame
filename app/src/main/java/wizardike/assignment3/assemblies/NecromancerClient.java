@@ -46,7 +46,7 @@ public class NecromancerClient {
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
-        level.getCollisionSystem().add(entity, circleHitBox);
+        level.getCollisionSystem().addCollidable(entity, circleHitBox);
         level.getFactionSystem().addFaction(entity, Faction.Mage);
         level.getCategorySystem().addCategory(entity, Category.Creature);
         Health health = new PlayerHealth(new Resistances(startingFireResistance, startingColdResistance,
@@ -55,7 +55,7 @@ public class NecromancerClient {
                 startingMaxHealth);
         level.getHealthSystem().addHealth(entity, health);
         level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
-        //TODO add client spells
+        //TODO addCollidable client spells
         return entity;
     }
 }

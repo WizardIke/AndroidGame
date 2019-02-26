@@ -4,9 +4,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-/**
- * Created by Isaac on 14/12/2016.
- */
 public class Resistances {
     private final static int numResistances = 7;
     public enum Type {

@@ -2,7 +2,6 @@ package wizardike.assignment3;
 
 import android.app.Activity;
 import android.net.Uri;
-import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
 import java.io.DataInputStream;
@@ -18,10 +17,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.fragments.MainMenuFragment;
+import wizardike.assignment3.fragments.UserInterface;
 import wizardike.assignment3.graphics.GraphicsManager;
 import wizardike.assignment3.networking.NetworkConnection;
-import wizardike.assignment3.talents.UserInterface;
 import wizardike.assignment3.worlds.FrameTimer;
 import wizardike.assignment3.worlds.MainWorld;
 import wizardike.assignment3.worlds.World;

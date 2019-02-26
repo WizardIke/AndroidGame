@@ -9,7 +9,7 @@ public class GraveStoneHitBoxRectHost {
         int entity = level.getEngine().getEntityAllocator().allocate();
         Vector2 position = new Vector2(minPosX, minPosY);
         level.getPositionHostSystem().addPosition(entity, position);
-        level.getCollisionSystem().add(entity, new AlignedRectangleHitBox(position, maxPosX - minPosX,
+        level.getCollisionSystem().addCollidable(entity, new AlignedRectangleHitBox(position, maxPosX - minPosX,
                 maxPosY - minPosY, Float.POSITIVE_INFINITY));
         return entity;
     }

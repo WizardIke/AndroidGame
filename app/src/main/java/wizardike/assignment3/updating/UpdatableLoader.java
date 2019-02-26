@@ -4,10 +4,13 @@ import android.util.SparseArray;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.IdentityHashMap;
+
+import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
 
 public class UpdatableLoader {
     interface Loader {
-        Updatable load(DataInputStream save) throws IOException;
+        Updatable load(DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException;
     }
     private static final SparseArray<Loader> loaders = new SparseArray<>();
 
@@ -15,11 +18,11 @@ public class UpdatableLoader {
         loaders.put(id, loader);
     }
 
-    //static {
+    static {
+        PlayerAttackUpdater.registerLoader();
+   }
 
-   //}
-
-    public static Updatable load(int id, DataInputStream save) throws IOException {
-        return loaders.get(id).load(save);
+    public static Updatable load(int id, DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
+        return loaders.get(id).load(save, spriteSheetRemappingTable);
     }
 }

@@ -240,7 +240,7 @@ public class ComponentStorage<E> {
                 return index;
             }
         }
-        return Integer.MAX_VALUE; //Not found
+        return -1; //Not found
     }
 
     public IdentityHashMap<E, Integer> getRemappingTable() {

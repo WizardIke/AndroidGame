@@ -40,7 +40,7 @@ public class FireMageClient {
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
-        level.getCollisionSystem().add(entity, circleHitBox);
+        level.getCollisionSystem().addCollidable(entity, circleHitBox);
         level.getFactionSystem().addFaction(entity, Faction.Mage);
         level.getCategorySystem().addCategory(entity, Category.Creature);
         Health health = new PlayerHealth(new Resistances(startingResistance, startingResistance,
@@ -49,8 +49,8 @@ public class FireMageClient {
                 startingMaxHealth);
         level.getHealthSystem().addHealth(entity, health);
         level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
-        level.getUserInterfaceSystem().addAttackTalent(entity, new FireBoltSpellClient(0.4f * 6.0f, 0.5f, 2.0f * 6.0f, 10.0f, spriteSheet));
-        //TODO add move talent
+        //level.getUserInterfaceSystem().addAttackTalent(entity, new FireBoltSpellClient(0.4f * 6.0f, 0.5f, 2.0f * 6.0f, 10.0f, spriteSheet));
+        //TODO addCollidable move talent
         return entity;
     }
 }

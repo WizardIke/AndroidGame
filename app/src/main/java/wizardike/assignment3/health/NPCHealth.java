@@ -36,7 +36,9 @@ public class NPCHealth extends Health {
             float damageTaken = super.takeDamage(level, attacker, target, amount, type);
             if (health <= 0.0) {
                 Awesomeness awesomeness = level.getAwesomenessSystem().getAwesomeness(attacker);
-                awesomeness.increase(500);
+                if(awesomeness != null) {
+                    awesomeness.increase(500);
+                }
                 try {
                     level.getEngine().onWin();
                 } catch (IOException e) {

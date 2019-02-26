@@ -62,6 +62,11 @@ public class FireBoltAnimationSystem {
         for(int i = 0; i != fireBoltAnimationCount; ++i) {
             walkingAnimations[i].save(save, spriteSheetRemappingTable, spriteRemappingTable);
         }
+
+        final int[] entities = fireBoltAnimationComponentStorage.getAllEntities();
+        for (int i = 0; i != fireBoltAnimationCount; ++i) {
+            save.writeInt(entities[i]);
+        }
     }
 
     public void update(Level level) {

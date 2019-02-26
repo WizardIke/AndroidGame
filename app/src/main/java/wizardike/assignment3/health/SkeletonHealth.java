@@ -39,7 +39,9 @@ public class SkeletonHealth extends Health {
             if (health <= 0.0f) {
                 level.getDestructionSystem().delayedDestroy(target);
                 Awesomeness awesomeness = level.getAwesomenessSystem().getAwesomeness(attacker);
-                awesomeness.increase(awesomenessForKill);
+                if(awesomeness != null) {
+                    awesomeness.increase(awesomenessForKill);
+                }
             }
             return damageTaken;
         } else {

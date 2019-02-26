@@ -100,11 +100,10 @@ public class CharacterCreationFragment extends Fragment {
         super.onConfigurationChanged(newConfig);
         Activity activity = getActivity();
         if(activity != null) {
-            CharacterCreationFragment fragment = (CharacterCreationFragment) getActivity().getSupportFragmentManager().getFragments().get(0);
             if(getFragmentManager() != null) {
                 getFragmentManager().beginTransaction()
-                        .detach(fragment)
-                        .attach(fragment)
+                        .detach(this)
+                        .attach(this)
                         .commit();
             }
         }

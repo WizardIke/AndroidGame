@@ -34,9 +34,11 @@ public class PlayerHealth extends Health {
     public float takeDamage(Level level, int attacker, int target, float amount, Resistances.Type type) {
         if(health > 0) {
             float damageTaken = super.takeDamage(level, attacker, target, amount, type);
-            if (health < 0.0f) {
+            if (health <= 0.0f) {
                 Awesomeness awesomeness = level.getAwesomenessSystem().getAwesomeness(attacker);
-                awesomeness.increase(500);
+                if(awesomeness != null) {
+                    awesomeness.increase(500);
+                }
                 try {
                     level.getEngine().onLoose();
                 } catch (IOException e) {

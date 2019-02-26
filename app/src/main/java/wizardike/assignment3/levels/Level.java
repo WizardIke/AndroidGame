@@ -29,7 +29,6 @@ import wizardike.assignment3.physics.movement.Movement;
 import wizardike.assignment3.physics.movement.MovementSystem;
 import wizardike.assignment3.position.PositionHostSystem;
 import wizardike.assignment3.position.PositionSystem;
-import wizardike.assignment3.talents.UserInterfaceSystem;
 import wizardike.assignment3.updating.UpdatingSystem;
 import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.graphics.GeometrySystem;
@@ -66,7 +65,6 @@ public class Level {
     private SpriteSheetSystem spriteSheetSystem;
     private WalkingAnimationSystem walkingAnimationSystem;
     private FireBoltAnimationSystem fireBoltAnimationSystem;
-    private UserInterfaceSystem userInterfaceSystem;
 
     /**
      * Makes an empty level
@@ -101,7 +99,6 @@ public class Level {
         spriteSheetSystem = new SpriteSheetSystem();
         walkingAnimationSystem = new WalkingAnimationSystem();
         fireBoltAnimationSystem = new FireBoltAnimationSystem();
-        userInterfaceSystem = new UserInterfaceSystem();
     }
 
     /**
@@ -114,7 +111,6 @@ public class Level {
 
         final EntityUpdater entityUpdater = new EntityUpdater();
         destructionSystem = new DestructionSystem(); //There shouldn't have been any entities pending destruction when we saved.
-        updatingSystem = new UpdatingSystem(save, engine, entityUpdater);
         Vector2[] positionRemappingTable;
         if(host) {
             positionHostSystem = new PositionHostSystem(save, engine, entityUpdater);
@@ -161,8 +157,8 @@ public class Level {
                     fireBoltAnimationSystem = new FireBoltAnimationSystem(save, engine, entityUpdater,
                             spriteSheets,
                             geometrySystem.getTransparentSprites());
-                    userInterfaceSystem = new UserInterfaceSystem(save, engine, entityUpdater,
-                            spriteSheets);
+
+                    updatingSystem = new UpdatingSystem(save, engine, entityUpdater, spriteSheets);
                 } catch (IOException e) {
                     engine.onError();
                 }
@@ -240,10 +236,6 @@ public class Level {
         return camera;
     }
 
-    public UserInterfaceSystem getUserInterfaceSystem() {
-        return userInterfaceSystem;
-    }
-
     public SpriteSheetSystem getSpriteSheetSystem() {
         return spriteSheetSystem;
     }
@@ -257,6 +249,7 @@ public class Level {
     }
 
     public void update(Engine engine) {
+        regenerationSystem.update(this);
         basicAIControllerSystem.update(this);
         collisionSystem.update(this); //handle collisions between objects
         if(healthHostSystem != null) {
@@ -268,16 +261,13 @@ public class Level {
         if(positionHostSystem != null) {
             positionHostSystem.update(this);
         }
-        userInterfaceSystem.update(this);
         updatingSystem.update(this); //update anything that needs updating
         geometrySystem.update(this); //render geometry to a buffer
         lightingSystem.update(this); //apply lighting and shadows
         destructionSystem.update(this);
-        regenerationSystem.update(this);
     }
 
     public void save(DataOutputStream save) throws IOException {
-        updatingSystem.save(save);
         IdentityHashMap<Vector2, Integer> positionRemappingTable;
         if(positionSystem != null) {
             positionSystem.save(save);
@@ -313,7 +303,7 @@ public class Level {
         IdentityHashMap<Sprite, Integer> transparentSpriteRemappingTable
                 = geometrySystem.getTransparentSpriteRemappingTable();
         fireBoltAnimationSystem.save(save, spriteSheetRemappingTable, transparentSpriteRemappingTable);
-        userInterfaceSystem.save(save, spriteSheetRemappingTable);
+        updatingSystem.save(save, spriteSheetRemappingTable);
     }
 
     public void handleMessage(DataInputStream networkIn) throws IOException {
@@ -328,9 +318,6 @@ public class Level {
             }
             case SystemIds.collisionSystem: {
                 collisionSystem.handleMessage(this, networkIn);
-            }
-            case SystemIds.userInterfaceSystem: {
-                userInterfaceSystem.handleMessage(this, networkIn);
             }
             default: {
                 engine.onError();
@@ -365,8 +352,6 @@ public class Level {
         }
         regenerationSystem.removeRegenerations(entity);
         movementSystem.removeMovements(entity);
-        userInterfaceSystem.removeMoveTalents(entity);
-        userInterfaceSystem.removeAttackTalents(entity);
         spriteSheetSystem.removeSpriteSheets(entity);
         walkingAnimationSystem.removeWalkingAnimations(entity);
         fireBoltAnimationSystem.removeFireBoltAnimations(entity);

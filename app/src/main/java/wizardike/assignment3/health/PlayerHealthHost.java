@@ -10,9 +10,6 @@ import java.io.IOException;
 
 import static wizardike.assignment3.networking.NetworkMessageTypes.setHealth;
 
-/**
- * Created by Isaac on 31/08/2017.
- */
 public class PlayerHealthHost extends HealthHost {
     private static final int id = 3;
 
@@ -55,7 +52,9 @@ public class PlayerHealthHost extends HealthHost {
 
             if (health <= 0.0f) {
                 Awesomeness awesomeness = level.getAwesomenessSystem().getAwesomeness(attacker);
-                awesomeness.increase(500);
+                if(awesomeness != null) {
+                    awesomeness.increase(500);
+                }
                 try {
                     level.getEngine().onLoose();
                 } catch (IOException e) {

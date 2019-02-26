@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 
+import wizardike.assignment3.assemblies.EntityLoadedCallback;
+import wizardike.assignment3.assemblies.FireMagePlayer;
+import wizardike.assignment3.assemblies.NecromancerPlayer;
 import wizardike.assignment3.assemblies.Player;
 import wizardike.assignment3.levels.Level;
 
@@ -48,8 +51,14 @@ public class PlayerInfo {
         save.writeInt(level);
     }
 
-    public int createPlayer(Engine engine, Level level) {
-        return Player.create(engine, level);
+    public void createPlayer(Engine engine, Level level, EntityLoadedCallback callback) {
+        if(playerClass == 0) {
+            FireMagePlayer.create(engine, level, 0.0f, 0.0f, callback);
+        } else if(playerClass == 1) {
+            NecromancerPlayer.create(engine, level, 0.0f, 0.0f, callback);
+        } else {
+            throw new UnsupportedOperationException("Invalid player class: " + playerClass);
+        }
     }
 
     public Date getLastPlayedData() {

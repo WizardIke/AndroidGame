@@ -68,9 +68,10 @@ public class LightingSystem {
     }
 
     public void update(Level level) {
+        final Camera camera = level.getCamera();
+        if(camera.position == null) return;
         Engine engine = level.getEngine();
         final GraphicsManager graphicsManager = engine.getGraphicsManager();
-        final Camera camera = level.getCamera();
         final GeometryBuffer geometryBuffer = graphicsManager.getGeometryBuffer();
         final LightBuffer lightBuffer = graphicsManager.getLightBuffer();
         final PointLight[] pointLights = pointLightComponentStorage.getAllComponents();
@@ -84,11 +85,13 @@ public class LightingSystem {
         final float viewPortHalfHeight = 1 / (graphicsManager.getViewScaleY() * camera.zoom);
         final int geometryColorTextureHandle = geometryBuffer.getColorTextureHandle();
         lightBuffer.prepareToRenderLights();
+        final float cameraX = camera.position.getX();
+        final float cameraY = camera.position.getY();
         for(int i = 0; i != pointLightCount; ++i) {
             PointLight light = pointLights[i];
             if(IntersectionTesting.isIntersecting(light.position.getX() + light.offsetX,
                     light.position.getY() + light.offsetY, light.radius,
-                    camera.position.getX(), camera.position.getY(), viewPortHalfWidth, viewPortHalfHeight)) {
+                    cameraX, cameraY, viewPortHalfWidth, viewPortHalfHeight)) {
                 lightBuffer.renderLight(light, camera, graphicsManager);
                 for(int j = 0; j != circleShadowCasterCount; ++j) {
                     lightBuffer.renderCircleShadow(circleShadowCasters[j], light);

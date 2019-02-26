@@ -10,7 +10,6 @@ import wizardike.assignment3.Engine;
 import wizardike.assignment3.entity.EntityAllocator;
 import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.geometry.Vector2;
-import wizardike.assignment3.levels.Level;
 
 public class PositionSystem {
     private final ComponentStorage<Vector2> positionComponentStorage;
