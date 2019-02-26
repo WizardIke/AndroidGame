@@ -9,6 +9,11 @@ public class AlignedRectangle {
         mSize = new Vector2(width, height);
     }
 
+    public AlignedRectangle(Vector2 position, float width, float height) {
+        mPosition = position;
+        mSize = new Vector2(width, height);
+    }
+
     public float getX() {
         return mPosition.getX();
     }

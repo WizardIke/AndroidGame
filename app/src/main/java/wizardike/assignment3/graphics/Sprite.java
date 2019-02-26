@@ -3,16 +3,34 @@ package wizardike.assignment3.graphics;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.IdentityHashMap;
+
+import wizardike.assignment3.geometry.Vector2;
 
 public class Sprite {
-    public float positionX, positionY, width, height;
+    public Vector2 position;
+    public float offsetX, offsetY, width, height;
     public float texU, texV, texWidth, texHeight;
 
     public Sprite() {}
 
-    public Sprite(DataInputStream save) throws IOException {
-        positionX = save.readFloat();
-        positionY = save.readFloat();
+    public Sprite(Vector2 position, float offsetX, float offsetY, float width, float height,
+                  float texU, float texV, float texWidth, float texHeight) {
+        this.position = position;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        this.width = width;
+        this.height = height;
+        this.texU = texU;
+        this.texV = texV;
+        this.texWidth = texWidth;
+        this.texHeight = texHeight;
+    }
+
+    public Sprite(DataInputStream save, Vector2[] remappingTable) throws IOException {
+        position = remappingTable[save.readInt()];
+        offsetX = save.readFloat();
+        offsetY = save.readFloat();
         width = save.readFloat();
         height = save.readFloat();
         texU = save.readFloat();
@@ -21,9 +39,10 @@ public class Sprite {
         texHeight = save.readFloat();
     }
 
-    void save(DataOutputStream save) throws IOException {
-        save.writeFloat(positionX);
-        save.writeFloat(positionY);
+    void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> remappingTable) throws IOException {
+        save.writeInt(remappingTable.get(position));
+        save.writeFloat(offsetX);
+        save.writeFloat(offsetY);
         save.writeFloat(width);
         save.writeFloat(height);
         save.writeFloat(texU);

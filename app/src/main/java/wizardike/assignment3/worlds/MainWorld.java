@@ -1,12 +1,14 @@
 package wizardike.assignment3.worlds;
 
+import android.util.SparseArray;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.IdentityHashMap;
 
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.components.PlayerInfo;
-import wizardike.assignment3.entities.Player;
+import wizardike.assignment3.PlayerInfo;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.levels.LevelStreamingManager;
 
@@ -17,6 +19,8 @@ public class MainWorld implements World {
     private Level level;
     private LevelStreamingManager levelStreamingManager;
     private final PlayerInfo playerInfo;
+    private SparseArray<Level> levelsById = new SparseArray<>();
+    private IdentityHashMap<Level, Integer> idsByLevel = new IdentityHashMap<>();
 
     static void registerLoader() {
         WorldLoader.addLoader(id, new WorldLoader.Loader() {
@@ -38,6 +42,7 @@ public class MainWorld implements World {
             @Override
             protected void onLoadComplete(Level level) {
                 MainWorld.this.level = level;
+                addLevel(levelId, level);
                 if(saveState == 0) {
                     //this is the first time this save has been loaded, create the player
                     playerInfo.createPlayer(engine, level);
@@ -48,9 +53,22 @@ public class MainWorld implements World {
         });
     }
 
-    public void setLevel(int levelId, Level level) {
+    public void setCurrentLevel(int levelId, Level level) {
         this.levelId = levelId;
         this.level = level;
+    }
+
+    public void addLevel(int levelId, Level level) {
+        levelsById.put(levelId, level);
+        idsByLevel.put(level, levelId);
+    }
+
+    public int getIdOfLevel(Level level) {
+        return idsByLevel.get(level);
+    }
+
+    public Level getLevelById(int id) {
+        return levelsById.get(id);
     }
 
     public LevelStreamingManager getLevelStreamingManager() {

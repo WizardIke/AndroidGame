@@ -173,8 +173,8 @@ public class GeometryBuffer implements Closeable {
     }
 
     public void drawSprite30(Sprite sprite) {
-        spriteBuffer.put(sprite.positionX);
-        spriteBuffer.put(sprite.positionY);
+        spriteBuffer.put(sprite.position.getX() + sprite.offsetX);
+        spriteBuffer.put(sprite.position.getY() + sprite.offsetY);
         spriteBuffer.put(sprite.width);
         spriteBuffer.put(sprite.height);
         spriteBuffer.put(sprite.texU);
@@ -194,13 +194,14 @@ public class GeometryBuffer implements Closeable {
     }
 
     @TargetApi(18)
-    public void prepareToRenderOpaqueSpritesUsingDepthTexture30(Camera camera) {
+    public void prepareToRenderOpaqueSpritesUsingDepthTexture30(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         GLES20.glUseProgram(opaqueSpriteProgram);
-        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glEnableVertexAttribArray(opaqueSpritePositionHandle);
         GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
         GLES30.glVertexAttribDivisor(opaqueSpritePositionHandle, 1);
@@ -219,13 +220,14 @@ public class GeometryBuffer implements Closeable {
     }
 
     @TargetApi(18)
-    public void prepareToRenderOpaqueSpritesDepthOnly30(Camera camera) {
+    public void prepareToRenderOpaqueSpritesDepthOnly30(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, depthPassFrameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         GLES20.glUseProgram(spriteDepthProgram);
-        GLES20.glUniform4f(spriteDepthCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(spriteDepthCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glEnableVertexAttribArray(spriteDepthPositionHandle);
         GLES20.glEnableVertexAttribArray(spriteDepthTexCoordinatesHandle);
         GLES30.glVertexAttribDivisor(spriteDepthPositionHandle, 1);
@@ -243,14 +245,15 @@ public class GeometryBuffer implements Closeable {
     }
 
     @TargetApi(18)
-    public void prepareToRenderOpaqueSpritesColorOnly30(Camera camera) {
+    public void prepareToRenderOpaqueSpritesColorOnly30(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         GLES20.glDepthMask(false);
         GLES20.glUseProgram(opaqueSpriteProgram);
-        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glEnableVertexAttribArray(opaqueSpritePositionHandle);
         GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
         GLES30.glVertexAttribDivisor(opaqueSpritePositionHandle, 1);
@@ -268,11 +271,12 @@ public class GeometryBuffer implements Closeable {
     }
 
     @TargetApi(18)
-    public void prepareToRenderTransparentSprites30(Camera camera) {
+    public void prepareToRenderTransparentSprites30(Camera camera, GraphicsManager graphicsManager) {
         GLES30.glUseProgram(transparentSpriteProgram);
         //set camera constants on gpu
-        GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES30.glEnableVertexAttribArray(transparentSpritePositionHandle);
         GLES30.glEnableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
         GLES30.glVertexAttribDivisor(transparentSpritePositionHandle, 1);
@@ -314,52 +318,55 @@ public class GeometryBuffer implements Closeable {
 
 
     public void drawSprite20(Sprite sprite) {
-        spriteBuffer.put(sprite.positionX);
-        spriteBuffer.put(sprite.positionY);
+        float x = sprite.position.getX() + sprite.offsetX;
+        float y = sprite.position.getY() + sprite.offsetY;
+        spriteBuffer.put(x);
+        spriteBuffer.put(y);
         spriteBuffer.put(0.0f);
         spriteBuffer.put(sprite.texU);
         spriteBuffer.put(sprite.texV);
 
-        spriteBuffer.put(sprite.positionX);
-        spriteBuffer.put(sprite.positionY + sprite.height);
+        spriteBuffer.put(x);
+        spriteBuffer.put(y + sprite.height);
         spriteBuffer.put(sprite.height);
         spriteBuffer.put(sprite.texU);
         spriteBuffer.put(sprite.texV + sprite.texWidth);
 
-        spriteBuffer.put(sprite.positionX + sprite.width);
-        spriteBuffer.put(sprite.positionY);
+        spriteBuffer.put(x + sprite.width);
+        spriteBuffer.put(y);
         spriteBuffer.put(0.0f);
         spriteBuffer.put(sprite.texU + sprite.texWidth);
         spriteBuffer.put(sprite.texV);
 
 
-        spriteBuffer.put(sprite.positionX + sprite.width);
-        spriteBuffer.put(sprite.positionY);
+        spriteBuffer.put(x + sprite.width);
+        spriteBuffer.put(y);
         spriteBuffer.put(0.0f);
         spriteBuffer.put(sprite.texU + sprite.texWidth);
         spriteBuffer.put(sprite.texV);
 
-        spriteBuffer.put(sprite.positionX);
-        spriteBuffer.put(sprite.positionY + sprite.height);
+        spriteBuffer.put(x);
+        spriteBuffer.put(y + sprite.height);
         spriteBuffer.put(sprite.height);
         spriteBuffer.put(sprite.texU);
         spriteBuffer.put(sprite.texV + sprite.texWidth);
 
-        spriteBuffer.put(sprite.positionX + sprite.width);
-        spriteBuffer.put(sprite.positionY + sprite.height);
+        spriteBuffer.put(x + sprite.width);
+        spriteBuffer.put(y + sprite.height);
         spriteBuffer.put(sprite.height);
         spriteBuffer.put(sprite.texU + sprite.texWidth);
         spriteBuffer.put(sprite.texV + sprite.texHeight);
     }
 
-    public void prepareToRenderOpaqueSpritesUsingDepthTexture20(Camera camera) {
+    public void prepareToRenderOpaqueSpritesUsingDepthTexture20(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         GLES20.glUseProgram(opaqueSpriteProgram);
         //set camera constants on gpu
-        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glEnableVertexAttribArray(opaqueSpritePositionHandle);
         GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
 
@@ -379,13 +386,14 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDepthMask(false);
     }
 
-    public void prepareToRenderOpaqueSpritesDepthOnly20(Camera camera) {
+    public void prepareToRenderOpaqueSpritesDepthOnly20(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, depthPassFrameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         GLES20.glUseProgram(spriteDepthProgram);
-        GLES20.glUniform4f(spriteDepthCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(spriteDepthCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glEnableVertexAttribArray(spriteDepthPositionHandle);
         GLES20.glEnableVertexAttribArray(spriteDepthTexCoordinatesHandle);
 
@@ -400,14 +408,15 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDisableVertexAttribArray(spriteDepthTexCoordinatesHandle);
     }
 
-    public void prepareToRenderOpaqueSpritesColorOnly20(Camera camera) {
+    public void prepareToRenderOpaqueSpritesColorOnly20(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         GLES20.glDepthMask(false);
         GLES20.glUseProgram(opaqueSpriteProgram);
-        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(opaqueSpriteCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glEnableVertexAttribArray(opaqueSpritePositionHandle);
         GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
     }
@@ -417,11 +426,12 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
     }
 
-    public void prepareToRenderTransparentSprites20(Camera camera) {
+    public void prepareToRenderTransparentSprites20(Camera camera, GraphicsManager graphicsManager) {
         GLES30.glUseProgram(transparentSpriteProgram);
         //set camera constants on gpu
-        GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glEnableVertexAttribArray(transparentSpritePositionHandle);
         GLES20.glEnableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);

@@ -3,7 +3,10 @@ package wizardike.assignment3;
 import android.util.SparseArray;
 
 import java.lang.reflect.Array;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
+
+import wizardike.assignment3.geometry.Vector2;
 
 /**
  * Stores components of one type for multiple entities in an array for fast iteration while
@@ -51,7 +54,7 @@ public class ComponentStorage<E> {
     }
 
     /**
-     * @param entity The entity to associate with the component for lookup latter
+     * @param entity The entity to associate with the component for lookup later
      * @param component The component to insert
      */
     public void addComponent(int entity, E component) {
@@ -228,5 +231,25 @@ public class ComponentStorage<E> {
             newEntities[i] = oldEntities[i];
         }
         entities = newEntities;
+    }
+
+    public int indexOf(int entity, E component) {
+        int[] indices = lookup.get(entity);
+        for(int index : indices) {
+            if(components[index] == component) {
+                return index;
+            }
+        }
+        return Integer.MAX_VALUE; //Not found
+    }
+
+    public IdentityHashMap<E, Integer> getRemappingTable() {
+        IdentityHashMap<E, Integer> remappingTable = new IdentityHashMap<>();
+        final E[] components = this.components;
+        final int positionCount = size;
+        for(int i = 0; i != positionCount; ++i) {
+            remappingTable.put(components[i], i);
+        }
+        return remappingTable;
     }
 }

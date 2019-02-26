@@ -4,12 +4,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entities.EntityAllocator;
-import wizardike.assignment3.entities.EntityUpdater;
+import wizardike.assignment3.entity.EntityAllocator;
+import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.geometry.Vector4;
 import wizardike.assignment3.graphics.Sprite;
 
@@ -107,5 +108,13 @@ public class SpriteSheetSystem {
                 sprite.texHeight = newCoordinates.getW();
             }
         }
+    }
+
+    public SpriteSheet[] getSpriteSheets() {
+        return spriteSheetComponentStorage.getAllComponents();
+    }
+
+    public IdentityHashMap<SpriteSheet, Integer> getRemappingTable() {
+        return spriteSheetComponentStorage.getRemappingTable();
     }
 }

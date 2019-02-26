@@ -22,6 +22,7 @@ public class WorldLoader {
 
     static {
         MainWorld.registerLoader();
+        FrameTimer.registerLoader();
     }
 
     public static World load(int id, DataInputStream save, Engine engine, Callback callback) throws IOException {

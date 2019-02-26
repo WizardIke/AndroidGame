@@ -5,11 +5,14 @@ import android.os.Build;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entities.EntityAllocator;
-import wizardike.assignment3.entities.EntityUpdater;
+import wizardike.assignment3.entity.EntityAllocator;
+import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.geometry.Vector2;
+import wizardike.assignment3.levels.Level;
 
 public class GeometrySystem {
     private final ComponentStorage<Sprite> spriteComponentStorage;
@@ -20,13 +23,14 @@ public class GeometrySystem {
         transparentSpriteComponentStorage = new ComponentStorage<>(Sprite.class);
     }
 
-    public GeometrySystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
+    public GeometrySystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
+                          Vector2[] remappingTable) throws IOException {
         final EntityAllocator entityAllocator = engine.getEntityAllocator();
 
         final int spriteCount = save.readInt();
         Sprite[] sprites = new Sprite[spriteCount];
         for(int i = 0; i != spriteCount; ++i) {
-            sprites[i] = new Sprite(save);
+            sprites[i] = new Sprite(save, remappingTable);
         }
         int[] entities = new int[spriteCount];
         for(int i = 0; i != spriteCount; ++i) {
@@ -38,21 +42,22 @@ public class GeometrySystem {
         final int transparentSpriteCount = save.readInt();
         Sprite[] transparentSprites = new Sprite[transparentSpriteCount];
         for(int i = 0; i != transparentSpriteCount; ++i) {
-            transparentSprites[i] = new Sprite(save);
+            transparentSprites[i] = new Sprite(save, remappingTable);
         }
         int[] transparentEntities = new int[transparentSpriteCount];
         for(int i = 0; i != transparentSpriteCount; ++i) {
             final int oldEntity = save.readInt();
-            entities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            transparentEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
         }
         transparentSpriteComponentStorage = new ComponentStorage<>(Sprite.class, transparentEntities, transparentSprites);
     }
 
-    public void update(Engine engine) {
+    public void update(Level level) {
+        Engine engine = level.getEngine();
         final GraphicsManager graphicsManager = engine.getGraphicsManager();
         final GeometryBuffer geometryBuffer = graphicsManager.getGeometryBuffer();
         final TextureManager textureManager = graphicsManager.getTextureManager();
-        final Camera camera = graphicsManager.getCamera();
+        final Camera camera = level.getCamera();
         final int currentBufferIndex = graphicsManager.getCurrentBufferIndex();
         final Sprite[] sprites = spriteComponentStorage.getAllComponents();
         final Sprite[] transparentSprites = transparentSpriteComponentStorage.getAllComponents();
@@ -75,20 +80,20 @@ public class GeometrySystem {
 
             geometryBuffer.prepareToRenderMeshes(textureManager.getTextureHandle());
             if(graphicsManager.isDepthTextureSupported()) {
-                geometryBuffer.prepareToRenderOpaqueSpritesUsingDepthTexture30(camera);
+                geometryBuffer.prepareToRenderOpaqueSpritesUsingDepthTexture30(camera, graphicsManager);
                 geometryBuffer.renderOpaqueSpritesMesh30(spritesOffset, numberOfSprites);
                 geometryBuffer.finishRenderingOpaqueSpritesUsingDepthTexture30();
             } else {
-                geometryBuffer.prepareToRenderOpaqueSpritesDepthOnly30(camera);
+                geometryBuffer.prepareToRenderOpaqueSpritesDepthOnly30(camera, graphicsManager);
                 geometryBuffer.renderOpaqueSpritesMesh30(spritesOffset, numberOfSprites);
                 geometryBuffer.finishRenderingOpaqueSpritesDepthOnly30();
 
-                geometryBuffer.prepareToRenderOpaqueSpritesColorOnly30(camera);
+                geometryBuffer.prepareToRenderOpaqueSpritesColorOnly30(camera, graphicsManager);
                 geometryBuffer.renderOpaqueSpritesMesh30(spritesOffset, numberOfSprites);
                 geometryBuffer.finishRenderingOpaqueSpritesColorOnly30();
             }
 
-            geometryBuffer.prepareToRenderTransparentSprites30(camera);
+            geometryBuffer.prepareToRenderTransparentSprites30(camera, graphicsManager);
             geometryBuffer.renderTransparentSpritesMesh30(transparentSpritesOffset, transparentNumberOfSprites);
             geometryBuffer.finishRenderingTransparentSprites30();
         } else {
@@ -106,20 +111,20 @@ public class GeometrySystem {
 
             geometryBuffer.prepareToRenderMeshes(textureManager.getTextureHandle());
             if(graphicsManager.isDepthTextureSupported()) {
-                geometryBuffer.prepareToRenderOpaqueSpritesUsingDepthTexture20(camera);
+                geometryBuffer.prepareToRenderOpaqueSpritesUsingDepthTexture20(camera, graphicsManager);
                 geometryBuffer.renderOpaqueSpritesMesh20(spritesOffset, numberOfSprites);
                 geometryBuffer.finishRenderingOpaqueSpritesUsingDepthTexture20();
             } else {
-                geometryBuffer.prepareToRenderOpaqueSpritesDepthOnly20(camera);
+                geometryBuffer.prepareToRenderOpaqueSpritesDepthOnly20(camera, graphicsManager);
                 geometryBuffer.renderOpaqueSpritesMesh20(spritesOffset, numberOfSprites);
                 geometryBuffer.finishRenderingOpaqueSpritesDepthOnly20();
 
-                geometryBuffer.prepareToRenderOpaqueSpritesColorOnly20(camera);
+                geometryBuffer.prepareToRenderOpaqueSpritesColorOnly20(camera, graphicsManager);
                 geometryBuffer.renderOpaqueSpritesMesh20(spritesOffset, numberOfSprites);
                 geometryBuffer.finishRenderingOpaqueSpritesColorOnly20();
             }
 
-            geometryBuffer.prepareToRenderTransparentSprites20(camera);
+            geometryBuffer.prepareToRenderTransparentSprites20(camera, graphicsManager);
             geometryBuffer.renderTransparentSpritesMesh20(transparentSpritesOffset, transparentNumberOfSprites);
             geometryBuffer.finishRenderingTransparentSprites20();
         }
@@ -141,7 +146,8 @@ public class GeometrySystem {
         int index = transparentSpriteComponentStorage.size() - 1;
         while(index != 0) {
             final int newIndex = index - 1;
-            if((sprites[newIndex].positionY + sprites[newIndex].height) > (sprites[index].positionY + sprites[index].height)) {
+            if((sprites[newIndex].position.getY() + sprites[newIndex].offsetY + sprites[newIndex].height)
+                    > (sprites[index].position.getY() + sprites[index].offsetY + sprites[index].height)) {
                 transparentSpriteComponentStorage.swapComponents(newIndex, index);
             } else {
                 break;
@@ -154,12 +160,12 @@ public class GeometrySystem {
         transparentSpriteComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save) throws IOException {
+    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> remappingTable) throws IOException {
         Sprite[] sprites = spriteComponentStorage.getAllComponents();
         final int spriteCount = spriteComponentStorage.size();
         save.writeInt(spriteCount);
         for(int i = 0; i != spriteCount; ++i) {
-            sprites[i].save(save);
+            sprites[i].save(save, remappingTable);
         }
         int[] entities = spriteComponentStorage.getAllEntities();
         for (int i = 0; i != spriteCount; ++i) {
@@ -170,7 +176,7 @@ public class GeometrySystem {
         final int transparentSpriteCount = spriteComponentStorage.size();
         save.writeInt(transparentSpriteCount);
         for(int i = 0; i != transparentSpriteCount; ++i) {
-            transparentSprites[i].save(save);
+            transparentSprites[i].save(save, remappingTable);
         }
         int[] transparentEntities = transparentSpriteComponentStorage.getAllEntities();
         for (int i = 0; i != transparentSpriteCount; ++i) {
@@ -198,5 +204,13 @@ public class GeometrySystem {
 
     public int getTransparentSpriteCount() {
         return transparentSpriteComponentStorage.size();
+    }
+
+    public IdentityHashMap<Sprite, Integer> getSpriteRemappingTable() {
+        return spriteComponentStorage.getRemappingTable();
+    }
+
+    public IdentityHashMap<Sprite, Integer> getTransparentSpriteRemappingTable() {
+        return transparentSpriteComponentStorage.getRemappingTable();
     }
 }

@@ -8,10 +8,6 @@ import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.util.AttributeSet;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
@@ -69,10 +65,10 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
 
     private Engine engine;
     private WorldUpdatingSystem worldUpdatingSystem = new WorldUpdatingSystem();
-    private Camera camera = new Camera();
     private GeometryBuffer geometryBuffer = null;
     private LightBuffer lightBuffer = null;
     private TextureManager textureManager = null;
+    private float viewScaleX, viewScaleY;
     private long[] frameSyncObjects;
     private int currentBufferIndex;
     private int openGLVersion;
@@ -122,12 +118,16 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
         return depthRenderBufferHandle == -2;
     }
 
-    public Camera getCamera() {
-        return camera;
-    }
-
     public LightBuffer getLightBuffer() {
         return lightBuffer;
+    }
+
+    public float getViewScaleX() {
+        return viewScaleX;
+    }
+
+    public float getViewScaleY() {
+        return viewScaleY;
     }
 
     @Override
@@ -172,11 +172,11 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height) {
         if(width > height) {
-            camera.scaleX = 2 / MIN_VIEW_PORT_LENGTH_IN_METERS;
-            camera.scaleY = height / width * camera.scaleX;
+            viewScaleX = 2 / MIN_VIEW_PORT_LENGTH_IN_METERS;
+            viewScaleY = height / width * viewScaleX;
         } else {
-            camera.scaleY = 2 / MIN_VIEW_PORT_LENGTH_IN_METERS;
-            camera.scaleX = width / height * camera.scaleY;
+            viewScaleY = 2 / MIN_VIEW_PORT_LENGTH_IN_METERS;
+            viewScaleX = width / height * viewScaleY;
         }
         GLES20.glViewport(0, 0, width, height);
 

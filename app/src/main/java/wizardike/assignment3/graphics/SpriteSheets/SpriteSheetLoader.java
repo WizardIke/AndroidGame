@@ -22,9 +22,10 @@ public class SpriteSheetLoader {
         loaders.put(id, loader);
     }
 
-    //static {
-
-    //}
+    static {
+        SkeletonSpriteSheet.registerLoader();
+        NecromancerSpriteSheet.registerLoader();
+    }
 
     public static SpriteSheet load(int id, DataInputStream save, Engine engine,
                                    final HashMap<Vector4, Vector4> remappingTable, Callback callback)

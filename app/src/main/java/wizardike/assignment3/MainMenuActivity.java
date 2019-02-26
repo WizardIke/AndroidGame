@@ -12,6 +12,11 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 
+import wizardike.assignment3.fragments.CharacterCreationFragment;
+import wizardike.assignment3.fragments.LoadGameFragment;
+import wizardike.assignment3.fragments.MainMenuFragment;
+import wizardike.assignment3.fragments.SettingsFragment;
+
 /**
  * Plays the games title sound track and manages fragments for the main menu
  */
@@ -71,6 +76,7 @@ public class MainMenuActivity extends AppCompatActivity implements
         musicPlayer.close();
     }
 
+    @Override
     public void playGame(Uri location) {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         settings.edit().putString("last_saved_game", location.toString()).apply();

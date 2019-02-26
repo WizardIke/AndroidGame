@@ -6,8 +6,8 @@ import java.io.IOException;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entities.EntityAllocator;
-import wizardike.assignment3.entities.EntityUpdater;
+import wizardike.assignment3.entity.EntityAllocator;
+import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.levels.Level;
 
 public class UpdatingSystem {
@@ -50,6 +50,11 @@ public class UpdatingSystem {
             Updatable updatable = updatables[i];
             save.writeInt(updatable.getId());
             updatable.save(save);
+        }
+
+        int[] entities = updatableComponentStorage.getAllEntities();
+        for (int i = 0; i != updatableCount; ++i) {
+            save.writeInt(entities[i]);
         }
     }
 

@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -60,6 +62,16 @@ public class PlayGameActivity extends AppCompatActivity {
                         @Override
                         public void playMusic(int[] resourceIds) {
                             musicPlayer.changeFileIDs(resourceIds);
+                        }
+                        @Override
+                        public void addFragment(int id, Fragment fragment) {
+                            FragmentManager fm = getSupportFragmentManager();
+                            if(fm == null) {
+                                return;
+                            }
+                            fm.beginTransaction()
+                                    .add(id, fragment)
+                                    .commit();
                         }
                     });
                     succeeded = true;

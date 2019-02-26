@@ -3,12 +3,15 @@ package wizardike.assignment3.graphics;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entities.EntityAllocator;
-import wizardike.assignment3.entities.EntityUpdater;
+import wizardike.assignment3.entity.EntityAllocator;
+import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.geometry.IntersectionTesting;
+import wizardike.assignment3.geometry.Vector2;
+import wizardike.assignment3.levels.Level;
 
 public class LightingSystem {
     private final ComponentStorage<PointLight> pointLightComponentStorage;
@@ -21,13 +24,14 @@ public class LightingSystem {
         lineShadowCasterComponentStorage = new ComponentStorage<>(LineShadowCaster.class);
     }
 
-    public LightingSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
+    public LightingSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
+                          Vector2[] positionRemappingTable) throws IOException {
         final EntityAllocator entityAllocator = engine.getEntityAllocator();
 
         final int pointLightCount = save.readInt();
         final PointLight[] pointLights = new PointLight[pointLightCount];
         for(int i = 0; i != pointLightCount; ++i) {
-            pointLights[i] = new PointLight(save);
+            pointLights[i] = new PointLight(save, positionRemappingTable);
         }
         int[] pointLightEntities = new int[pointLightCount];
         for(int i = 0; i != pointLightCount; ++i) {
@@ -63,9 +67,10 @@ public class LightingSystem {
         lineShadowCasterComponentStorage = new ComponentStorage<>(LineShadowCaster.class, lineShadowCasterEntities, lineShadowCasters);
     }
 
-    public void update(Engine engine) {
+    public void update(Level level) {
+        Engine engine = level.getEngine();
         final GraphicsManager graphicsManager = engine.getGraphicsManager();
-        final Camera camera = graphicsManager.getCamera();
+        final Camera camera = level.getCamera();
         final GeometryBuffer geometryBuffer = graphicsManager.getGeometryBuffer();
         final LightBuffer lightBuffer = graphicsManager.getLightBuffer();
         final PointLight[] pointLights = pointLightComponentStorage.getAllComponents();
@@ -75,22 +80,23 @@ public class LightingSystem {
         final LineShadowCaster[] lineShadowCasters = lineShadowCasterComponentStorage.getAllComponents();
         final int lineShadowCasterCount = lineShadowCasterComponentStorage.size();
 
-        final float viewPortHalfWidth = 1 / camera.scaleX;
-        final float viewPortHalfHeight = 1 / camera.scaleY;
+        final float viewPortHalfWidth = 1 / (graphicsManager.getViewScaleX() * camera.zoom);
+        final float viewPortHalfHeight = 1 / (graphicsManager.getViewScaleY() * camera.zoom);
         final int geometryColorTextureHandle = geometryBuffer.getColorTextureHandle();
         lightBuffer.prepareToRenderLights();
         for(int i = 0; i != pointLightCount; ++i) {
             PointLight light = pointLights[i];
-            if(IntersectionTesting.isIntersecting(light.positionX, light.positionY, light.radius,
-                    camera.positionX, camera.positionY, viewPortHalfWidth, viewPortHalfHeight)) {
-                lightBuffer.renderLight(light, camera);
+            if(IntersectionTesting.isIntersecting(light.position.getX() + light.offsetX,
+                    light.position.getY() + light.offsetY, light.radius,
+                    camera.position.getX(), camera.position.getY(), viewPortHalfWidth, viewPortHalfHeight)) {
+                lightBuffer.renderLight(light, camera, graphicsManager);
                 for(int j = 0; j != circleShadowCasterCount; ++j) {
                     lightBuffer.renderCircleShadow(circleShadowCasters[j], light);
                 }
                 for(int j = 0; j != lineShadowCasterCount; ++j) {
                     lightBuffer.renderLineShadow(lineShadowCasters[j], light);
                 }
-                lightBuffer.applyLighting(geometryColorTextureHandle, light, camera);
+                lightBuffer.applyLighting(geometryColorTextureHandle, light, camera, graphicsManager);
             }
         }
     }
@@ -119,12 +125,12 @@ public class LightingSystem {
         lineShadowCasterComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save) throws IOException {
+    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
         final PointLight[] pointLights = pointLightComponentStorage.getAllComponents();
         final int pointLightCount = pointLightComponentStorage.size();
         save.writeInt(pointLightCount);
         for(int i = 0; i != pointLightCount; ++i) {
-            pointLights[i].save(save);
+            pointLights[i].save(save, positionRemappingTable);
         }
         final int[] pointLightEntities = pointLightComponentStorage.getAllEntities();
         for (int i = 0; i != pointLightCount; ++i) {

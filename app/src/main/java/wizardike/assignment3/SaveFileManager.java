@@ -8,8 +8,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import wizardike.assignment3.components.PlayerInfo;
-
 public class SaveFileManager {
     private static final String TAG = "SaveFileManager";
 

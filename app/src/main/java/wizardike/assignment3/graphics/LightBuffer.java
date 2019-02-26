@@ -141,16 +141,17 @@ public class LightBuffer {
         isFirstLight = true;
     }
 
-    public void renderLight(PointLight light, Camera camera) {
+    public void renderLight(PointLight light, Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, lightFrameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         GLES20.glUseProgram(color3DProgram);
-        GLES20.glUniform4f(color3DCameraUniformLocation, camera.scaleX * light.radius,
-                camera.scaleY * light.radius, -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(color3DCameraUniformLocation,
+                graphicsManager.getViewScaleX() * camera.zoom * light.radius, graphicsManager.getViewScaleY() * camera.zoom * light.radius,
+                -camera.position.getX(), -camera.position.getY());
 
         //draw light circle
-        addLightGeometry(light.positionX, light.positionY, light.radius);
+        addLightGeometry(light.position.getX(), light.position.getY(), light.radius);
         shadowMeshes.position(0);
         GLES20.glVertexAttribPointer(color3DPositionLocation, 3,
                 GLES20.GL_FLOAT, false, 7, shadowMeshes);
@@ -168,8 +169,9 @@ public class LightBuffer {
         GLES20.glBlendEquation(GLES20.GL_FUNC_REVERSE_SUBTRACT);
         GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_SRC_ALPHA);
         GLES20.glBlendColor(1.0f, 1.0f, 1.0f, 1.0f);
-        GLES20.glUniform4f(shadowScaleAndOffsetUniformLocation, camera.scaleX, camera.scaleY,
-                -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(shadowScaleAndOffsetUniformLocation,
+                graphicsManager.getViewScaleX() * camera.zoom, graphicsManager.getViewScaleY() * camera.zoom,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glUniform2f(shadowOneOverWidthAndHeightUniformLocation, 1.0f / width, 1.0f / height);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, depthTextureHandle);
@@ -211,8 +213,8 @@ public class LightBuffer {
 
     public void renderCircleShadow(CircleShadowCaster shadowCaster, PointLight light) {
         //find the points p and q to cast the shadow from
-        final float ux = shadowCaster.positionX - light.positionX;
-        final float uy = shadowCaster.positionY - light.positionY;
+        final float ux = shadowCaster.positionX - light.position.getX();
+        final float uy = shadowCaster.positionY - light.position.getY();
         final float ul2 = ux * ux + uy * uy;
         final float r2 = shadowCaster.radius * shadowCaster.radius;
         if(ul2 - r2 <= 0.0f) return; //we are in the shadow caster
@@ -253,18 +255,18 @@ public class LightBuffer {
         }
         //find shadow volume start
         final float uLength = (float)Math.sqrt(ul2);
-        final float lightToPX = px - light.positionX;
-        final float lightToPY = py - light.positionY;
-        final float lightToQX = qx - light.positionX;
-        final float lightToQY = qy - light.positionY;
+        final float lightToPX = px - light.position.getX();
+        final float lightToPY = py - light.position.getY();
+        final float lightToQX = qx - light.position.getX();
+        final float lightToQY = qy - light.position.getY();
         final float lightToPLength = (float)Math.sqrt(lightToPX * lightToPX + lightToPY * lightToPY);
         final float cosA = lightToPX * ux + lightToPY * uy;
         final float toVolumeStartLength = (uLength + shadowCaster.radius) / cosA;
         final float toVolumeStartMultiplier = toVolumeStartLength / lightToPLength;
-        final float volumeStart1X = lightToPX * toVolumeStartMultiplier + light.positionX;
-        final float volumeStart1Y = lightToPY * toVolumeStartMultiplier + light.positionY;
-        final float volumeStart2X = lightToQX * toVolumeStartMultiplier + light.positionX;
-        final float volumeStart2Y = lightToQY * toVolumeStartMultiplier + light.positionY;
+        final float volumeStart1X = lightToPX * toVolumeStartMultiplier + light.position.getX();
+        final float volumeStart1Y = lightToPY * toVolumeStartMultiplier + light.position.getY();
+        final float volumeStart2X = lightToQX * toVolumeStartMultiplier + light.position.getX();
+        final float volumeStart2Y = lightToQY * toVolumeStartMultiplier + light.position.getY();
 
         //draw front of shadow on the ground to prevent the sprite from incorrectly shadowing itself
         float multiplier = (uLength - shadowCaster.radius) / uLength;
@@ -278,12 +280,12 @@ public class LightBuffer {
         upperY *= multiplier;
         float lowerX = (lightToQX + centerX) * multiplier; //multiplier should still be the same due to symmetry
         float lowerY = (lightToQY + centerY) * multiplier;
-        centerX += light.positionX;
-        centerY += light.positionY;
-        upperX += light.positionX;
-        upperY += light.positionY;
-        lowerX += light.positionX;
-        lowerY += light.positionY;
+        centerX += light.position.getX();
+        centerY += light.position.getY();
+        upperX += light.position.getX();
+        upperY += light.position.getY();
+        lowerX += light.position.getX();
+        lowerY += light.position.getY();
         final float ambientLightMultiplier = shadowCaster.ambientLightMultiplier;
         final float shadowX = shadowCaster.positionX;
         final float shadowY = shadowCaster.positionY;
@@ -421,14 +423,14 @@ public class LightBuffer {
 
         //draw shadow volume
         addShadowGeometry(volumeStart1X, volumeStart1Y, volumeStart2X, volumeStart2Y,
-                shadowCaster.height, light.positionX, light.positionY,
+                shadowCaster.height, light.position.getX(), light.position.getY(),
                 light.positionZ, light.radius, shadowCaster.ambientLightMultiplier);
     }
 
     public void renderLineShadow(LineShadowCaster shadowCaster, PointLight light) {
         //TODO back face culling
         addShadowGeometry(shadowCaster.startX, shadowCaster.startY, shadowCaster.endX,
-                shadowCaster.endY, shadowCaster.height, light.positionX, light.positionY,
+                shadowCaster.endY, shadowCaster.height, light.position.getX(), light.position.getY(),
                 light.positionZ, light.radius, shadowCaster.ambientLightMultiplier);
     }
 
@@ -988,7 +990,7 @@ public class LightBuffer {
         }
     }
 
-    public void applyLighting(int geometryColorBufferHandle, PointLight light, Camera camera) {
+    public void applyLighting(int geometryColorBufferHandle, PointLight light, Camera camera, GraphicsManager graphicsManager) {
         //submit shadows for rendering
         if(shadowMeshes.position() != 0) {
             int numberOfVertices = shadowMeshes.position() / 5;
@@ -1004,11 +1006,12 @@ public class LightBuffer {
 
         GLES20.glUseProgram(applyLightProgram);
         GLES20.glUniform2f(oneOverWidthAndHeightUniformLocation, 1.0f / width, 1.0f / height);
-        GLES20.glUniform4f(cameraUniformLocation, camera.scaleX * light.radius,
-                camera.scaleY * light.radius, -camera.positionX, -camera.positionY);
+        GLES20.glUniform4f(cameraUniformLocation,
+                graphicsManager.getViewScaleX() * camera.zoom * light.radius, graphicsManager.getViewScaleY() * camera.zoom * light.radius,
+                -camera.position.getX(), -camera.position.getY());
         GLES20.glUniform1i(baseTextureUniformLocation, 0);
         GLES20.glUniform1i(lightTextureUniformLocation, 1);
-        GLES20.glUniform3f(lightPositionUniformLocation, light.positionX, light.positionY, light.positionZ);
+        GLES20.glUniform3f(lightPositionUniformLocation, light.position.getX(), light.position.getY(), light.positionZ);
         GLES20.glUniform3f(lightColorUniformLocation, light.colorR, light.colorG, light.colorB);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -1024,8 +1027,8 @@ public class LightBuffer {
         }
 
         //draw light circle
-        final float x = light.positionX;
-        final float y = light.positionY;
+        final float x = light.position.getX();
+        final float y = light.position.getY();
         final float radius = light.radius;
         final float root3 = (float)Math.sqrt(3.0f);
         shadowMeshes.put(x - root3 * radius);

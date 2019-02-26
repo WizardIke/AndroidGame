@@ -1,4 +1,4 @@
-Title:
+﻿Title:
     Soliloquy
 
 Author:
@@ -250,8 +250,26 @@ URL:
 
 License(s):
     * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
-	* GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
-	* GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
 
 File(s):
     * human_female.png
+
+
+
+Title:
+    Colored summoning circles
+
+Author:
+    John Harvey
+
+URL:
+    https://opengameart.org/content/colored-summoning-circles
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * green_circle.png
+    * blue_circle.png

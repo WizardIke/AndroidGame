@@ -2,6 +2,7 @@ package wizardike.assignment3;
 
 import android.app.Activity;
 import android.net.Uri;
+import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
 import java.io.DataInputStream;
@@ -10,13 +11,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import wizardike.assignment3.entities.EntityAllocator;
+import wizardike.assignment3.entity.EntityAllocator;
+import wizardike.assignment3.fragments.MainMenuFragment;
 import wizardike.assignment3.graphics.GraphicsManager;
+import wizardike.assignment3.networking.NetworkConnection;
+import wizardike.assignment3.talents.UserInterface;
+import wizardike.assignment3.worlds.FrameTimer;
 import wizardike.assignment3.worlds.MainWorld;
 import wizardike.assignment3.worlds.World;
 import wizardike.assignment3.worlds.WorldLoader;
@@ -29,6 +35,10 @@ public class Engine {
     private AudioManager audioManager;
     private ThreadPoolExecutor backgroundWorkManager;
     private EntityAllocator entityAllocator = new EntityAllocator();
+    private FrameTimer frameTimer = new FrameTimer();
+    private NetworkConnection networkConnection = null;
+    private Random randomNumberGenerator = new Random();
+    private UserInterface userInterface;
 
     private LoadingScreen loadingScreen = null;
     private MainWorld mainWorld;
@@ -45,6 +55,7 @@ public class Engine {
                 new LinkedBlockingQueue<Runnable>()
         );
         this.playGameRequest = playGameRequest;
+        userInterface = new UserInterface();
         //create the loading screen
         new LoadingScreen(this, new LoadingScreen.Callback() {
             @Override
@@ -74,6 +85,9 @@ public class Engine {
                                     graphicsManager.queueEvent(new Runnable() {
                                         @Override
                                         public void run() {
+                                            frameTimer.start();
+                                            graphicsManager.addWorld(frameTimer);
+
                                             graphicsManager.addWorld(Engine.this.mainWorld);
                                             loadingFinished();
                                         }
@@ -94,6 +108,8 @@ public class Engine {
         //Remove the loading screen
         loadingScreen.stop(Engine.this);
         loadingScreen = null; //delete loading screen
+
+        playGameRequest.addFragment(R.id.fragment_container, userInterface);
     }
 
     /**
@@ -138,6 +154,10 @@ public class Engine {
         }
     }
 
+    public FrameTimer getFrameTimer() {
+        return frameTimer;
+    }
+
     public GraphicsManager getGraphicsManager() {
         return graphicsManager;
     }
@@ -148,6 +168,14 @@ public class Engine {
 
     public Executor getBackgroundWorkManager() {
         return backgroundWorkManager;
+    }
+
+    public Random getRandomNumberGenerator() {
+        return randomNumberGenerator;
+    }
+
+    public UserInterface getUserInterface() {
+        return userInterface;
     }
 
     public void resume() {
@@ -170,7 +198,7 @@ public class Engine {
     /**
      * will eventually stop the game playing
      */
-    public void playingEnded(final PlayGameRequest.GameState state) {
+    private void playingEnded(final PlayGameRequest.GameState state) {
         if(state == PlayGameRequest.GameState.error) {
             Log.e("Engine", "playingEnded called with state " + state);
         } else {
@@ -196,5 +224,31 @@ public class Engine {
 
     public EntityAllocator getEntityAllocator() {
         return entityAllocator;
+    }
+
+    public void onWin() throws IOException {
+        //TODO
+        playingEnded(PlayGameRequest.GameState.finished);
+    }
+
+    public void onLoose() throws IOException {
+        //TODO
+        playingEnded(PlayGameRequest.GameState.finished);
+    }
+
+    public void onError() {
+        playingEnded(PlayGameRequest.GameState.error);
+    }
+
+    public NetworkConnection getNetworkConnection() {
+        return networkConnection;
+    }
+
+    public void setNetworkConnection(NetworkConnection networkConnection) {
+        this.networkConnection = networkConnection;
+    }
+
+    public MainWorld getMainWorld() {
+        return mainWorld;
     }
 }

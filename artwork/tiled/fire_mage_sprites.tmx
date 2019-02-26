@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="8" height="8" tilewidth="64" tileheight="64" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="fire_mage_tiles.tsx"/>
+ <tileset firstgid="274" source="explosion_tile_map.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="8" height="8">
+  <data encoding="csv">
+105,106,107,108,109,110,111,112,
+118,119,120,121,122,123,124,125,
+131,132,133,134,135,136,137,138,
+144,145,146,147,148,149,150,151,
+113,0,0,0,274,275,276,277,
+126,0,0,0,278,279,280,281,
+139,0,0,0,282,283,284,285,
+152,0,0,0,286,287,288,289
+</data>
+ </layer>
+</map>

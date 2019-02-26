@@ -3,20 +3,25 @@ package wizardike.assignment3.graphics;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.IdentityHashMap;
+
+import wizardike.assignment3.geometry.Vector2;
 
 public class PointLight {
-    public float positionX;
-    public float positionY;
+    public Vector2 position;
+    public float offsetX;
+    public float offsetY;
     public float positionZ; //distance off ground
     public float radius;
     public float colorR;
     public float colorG;
     public float colorB;
 
-    public PointLight(float positionX, float positionY, float positionZ, float radius,
+    public PointLight(Vector2 position, float offsetX, float offsetY, float positionZ, float radius,
                       float colorR, float colorG, float colorB) {
-        this.positionX = positionX;
-        this.positionY = positionY;
+        this.position = position;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
         this.positionZ = positionZ;
         this.radius = radius;
         this.colorR = colorR;
@@ -24,9 +29,10 @@ public class PointLight {
         this.colorB = colorB;
     }
 
-    public PointLight(DataInputStream save) throws IOException {
-        this.positionX = save.readFloat();
-        this.positionY = save.readFloat();
+    public PointLight(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
+        position = positionRemappingTable[save.readInt()];
+        this.offsetX = save.readFloat();
+        this.offsetY = save.readFloat();
         this.positionZ = save.readFloat();
         this.radius = save.readFloat();
         this.colorR = save.readFloat();
@@ -34,9 +40,10 @@ public class PointLight {
         this.colorB = save.readFloat();
     }
 
-    public void save(DataOutputStream save) throws IOException {
-        save.writeFloat(positionX);
-        save.writeFloat(positionY);
+    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
+        save.writeInt(positionRemappingTable.get(position));
+        save.writeFloat(offsetX);
+        save.writeFloat(offsetY);
         save.writeFloat(positionZ);
         save.writeFloat(radius);
         save.writeFloat(colorR);

@@ -12,7 +12,7 @@ public class LevelGenerator {
     }
 
     public static void generate(int levelId, Engine engine, Callback callback) {
-        final Level level = new Level();
+        final Level level = new Level(engine);
         callback.onLoadComplete(level);
     }
 }
