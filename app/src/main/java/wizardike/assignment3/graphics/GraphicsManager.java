@@ -65,15 +65,15 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
 
     private Engine engine;
     private WorldUpdatingSystem worldUpdatingSystem = new WorldUpdatingSystem();
-    private GeometryBuffer geometryBuffer = null;
-    private LightBuffer lightBuffer = null;
-    private TextureManager textureManager = null;
+    private GeometryBuffer geometryBuffer;
+    private LightBuffer lightBuffer;
+    private TextureManager textureManager;
     private float viewScaleX, viewScaleY;
     private long[] frameSyncObjects;
     private int currentBufferIndex;
     private int openGLVersion;
     private int depthRenderBufferHandle;
-    private int depthTextureHandle = -1;
+    private int depthTextureHandle;
 
     public GraphicsManager(Context context){
         super(context);
@@ -116,7 +116,7 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
     }
 
     public boolean isDepthTextureSupported() {
-        return depthRenderBufferHandle == -2;
+        return depthRenderBufferHandle == -1;
     }
 
     public LightBuffer getLightBuffer() {
@@ -144,19 +144,35 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
             currentBufferIndex = 0;
         }
 
-        depthRenderBufferHandle = -2;
+        int[] temp = new int[1];
+        GLES20.glGenTextures(1, temp, 0);
+        depthTextureHandle = temp[0];
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, depthTextureHandle);
+        //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        //Non-power-of-two textures might only support GL_CLAMP_TO_EDGE.
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+
+        depthRenderBufferHandle = -1;
         if(openGLVersion <= 20) {
             String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
             if(!extensions.contains("OES_depth_texture")) {
-                depthRenderBufferHandle = -1; //set depth textures as not supported
+                //set depth textures as not supported
+                GLES20.glGenRenderbuffers(1, temp, 0);
+                depthRenderBufferHandle = temp[0];
             }
         }
 
-        if(textureManager == null) {
-            textureManager = new TextureManager(engine);
-        } else {
-            textureManager.reload();
-        }
+        geometryBuffer = new GeometryBuffer(depthTextureHandle, depthRenderBufferHandle,
+                openGLVersion, getResources());
+
+        lightBuffer = new LightBuffer(getResources(), depthTextureHandle,
+                depthRenderBufferHandle == -1);
+
+        textureManager.reload();
     }
 
     @Override
@@ -181,55 +197,24 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
         }
         GLES20.glViewport(0, 0, width, height);
 
-        if(depthRenderBufferHandle != -2) {
-            //resize/create depth buffer
-            if(depthRenderBufferHandle == -1) {
-                int[] temp = new int[1];
-                GLES20.glGenRenderbuffers(1, temp, 0);
-                depthRenderBufferHandle = temp[0];
-            }
+        if(depthRenderBufferHandle != -1) {
+            //create depth buffer
             GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, depthRenderBufferHandle);
             GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_DEPTH_COMPONENT16, width, height);
 
-            //resize/create 'fake' depth texture
+            //create 'fake' depth texture
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, depthTextureHandle);
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA4, width, height, 0,
                     GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
-            //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-            //Non-power-of-two textures might only support GL_CLAMP_TO_EDGE.
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         } else {
-            //resize/create depth texture
-            if(depthTextureHandle == -1) {
-                int[] temp = new int[1];
-                GLES20.glGenTextures(1, temp, 0);
-                depthTextureHandle = temp[0];
-            }
+            //create depth texture
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, depthTextureHandle);
             GLES20.glTexImage2D (GLES20.GL_TEXTURE_2D, 0, GLES20.GL_DEPTH_COMPONENT16, width, height, 0,
                     GLES20.GL_DEPTH_COMPONENT, GLES20.GL_UNSIGNED_SHORT, null);
-            //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-            //Non-power-of-two textures might only support GL_CLAMP_TO_EDGE.
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         }
 
-        if(geometryBuffer == null) {
-            geometryBuffer = new GeometryBuffer(width, height, depthTextureHandle,
-                    depthRenderBufferHandle, openGLVersion, getResources());
-        } else {
-            geometryBuffer.resize(width, height);
-        }
-        if(lightBuffer == null) {
-            lightBuffer = new LightBuffer(width, height, getResources(), depthTextureHandle,
-                    depthRenderBufferHandle == -2);
-        } else {
-            lightBuffer.resize(width, height);
-        }
+        geometryBuffer.setSize(width, height);
+        lightBuffer.setSize(width, height);
     }
 
     public void addWorld(World world) {

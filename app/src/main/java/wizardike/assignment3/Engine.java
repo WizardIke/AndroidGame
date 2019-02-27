@@ -41,8 +41,8 @@ public class Engine {
     private LoadingScreen loadingScreen = null;
     private MainWorld mainWorld;
 
-    public Engine(Activity context, PlayGameRequest playGameRequest) {
-        graphicsManager = new GraphicsManager(context);
+    public Engine(Activity context, PlayGameRequest playGameRequest, GraphicsManager graphicsManager) {
+        this.graphicsManager = graphicsManager;
         graphicsManager.setEngine(this);
         audioManager = new AudioManager(context, MAX_AUDIO_STREAMS);
         backgroundWorkManager = new ThreadPoolExecutor(

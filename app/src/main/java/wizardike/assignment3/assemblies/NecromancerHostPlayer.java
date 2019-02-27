@@ -38,7 +38,7 @@ public class NecromancerHostPlayer {
     public static int create(Level level, final float posX, final float posY, WalkingSpriteSheet spriteSheet) {
         int entity = level.getEngine().getEntityAllocator().allocate();
         Vector2 position = new Vector2(posX, posY);
-        level.getPositionHostSystem().addPosition(entity, position);
+        level.getPositionSystem().addPosition(entity, position);
         Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addSprite(entity, sprite);
@@ -54,8 +54,8 @@ public class NecromancerHostPlayer {
                 startingLightningResistance, startingArcaneResistance, startingBludgeoningResistance,
                 startingPiecingResistance, startingSlashingResistance), armorToughness, startingMaxHealth,
                 startingMaxHealth);
-        level.getHealthHostSystem().addHealth(entity, health);
-        level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
+        level.getHealthSystem().addHealth(entity, health);
+        level.getRegenerationHostSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
         level.getCamera().position = position;
         //TODO addCollidable host spells
         //TODO addCollidable host movement controller component

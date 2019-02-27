@@ -86,7 +86,7 @@ public class MainWorld implements World {
 
     @Override
     public void update(Engine engine) {
-        level.update(engine);
+        level.update();
     }
 
     @Override

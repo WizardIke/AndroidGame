@@ -13,6 +13,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import wizardike.assignment3.graphics.GraphicsManager;
+
 public class PlayGameActivity extends AppCompatActivity {
     private AmbientMusicPlayer musicPlayer;
     private Engine engine;
@@ -24,6 +26,7 @@ public class PlayGameActivity extends AppCompatActivity {
         musicPlayer = new AmbientMusicPlayer(MusicTypes.peacefulTracks, this);
 
         setContentView(R.layout.activity_play_game);
+        final GraphicsManager graphicsManager = findViewById(R.id.graphics_manager);
 
         ActionBar actionbar = getSupportActionBar();
         if(actionbar != null) {
@@ -73,7 +76,7 @@ public class PlayGameActivity extends AppCompatActivity {
                                     .add(id, fragment)
                                     .commit();
                         }
-                    });
+                    }, graphicsManager);
                     succeeded = true;
                 } catch (Exception e) {/*empty*/}
             }

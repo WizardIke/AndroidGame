@@ -10,10 +10,10 @@ import wizardike.assignment3.levels.Level;
  * Created by Isaac on 29/08/2017.
  */
 public class NPCHealth extends Health {
-    private static final int id = 1;
+    private static final int id = 2;
 
     static void registerLoader() {
-        HealthComponentLoader.addLoader(id, new HealthComponentLoader.Loader() {
+        HealthLoader.addLoader(id, new HealthLoader.Loader() {
             @Override
             public Health load(DataInputStream save) throws IOException {
                 return new NPCHealth(save);

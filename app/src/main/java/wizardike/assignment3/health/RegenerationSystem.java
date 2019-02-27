@@ -14,7 +14,7 @@ import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.levels.Level;
 
 public class RegenerationSystem {
-    private final ComponentStorage<Regeneration> regenerationComponentStorage;
+    final ComponentStorage<Regeneration> regenerationComponentStorage;
 
     public RegenerationSystem() {
         regenerationComponentStorage = new ComponentStorage<>(Regeneration.class);

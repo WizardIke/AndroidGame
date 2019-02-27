@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Regeneration {
     private float amount;
-    private Health health;
+    Health health;
 
     public Regeneration(float amount, Health health) {
         this.amount = amount;

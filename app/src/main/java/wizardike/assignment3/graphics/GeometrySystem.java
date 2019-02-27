@@ -77,7 +77,7 @@ public class GeometrySystem {
             for(int i = 0; i != transparentNumberOfSprites; ++i) {
                 geometryBuffer.drawSprite30(transparentSprites[i]);
             }
-            geometryBuffer.finishGeneratingMeshes30();
+            geometryBuffer.finishGeneratingMeshes30(spritesOffset, numberOfSprites + transparentNumberOfSprites);
 
             geometryBuffer.prepareToRenderMeshes(textureManager.getTextureHandle());
             if(graphicsManager.isDepthTextureSupported()) {
@@ -158,7 +158,7 @@ public class GeometrySystem {
     }
 
     public void removeTransparentSprites(int entity) {
-        transparentSpriteComponentStorage.removeComponents(entity);
+        transparentSpriteComponentStorage.removeComponentsKeepingOrdering(entity);
     }
 
     public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> remappingTable) throws IOException {

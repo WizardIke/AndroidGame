@@ -21,7 +21,7 @@ public class GeometryBuffer implements Closeable {
     private static final int SPRITE_SIZE_IN_BYTES30 = 8 * 4;
     private static final int SPRITE_SIZE_IN_BYTES20 = 30 * 4;
 
-    private int depthPassFrameBufferHandle = -2;
+    private int depthPassFrameBufferHandle = -1;
     private int frameBufferHandle;
     private int colorTextureHandle;
 
@@ -43,7 +43,7 @@ public class GeometryBuffer implements Closeable {
     private int transparentSpriteTexCoordinatesHandle;
     private int transparentSpriteCameraScaleAndOffsetHandle;
 
-    GeometryBuffer(int width, int height, int depthTextureHandle, int depthRenderBufferHandle,
+    GeometryBuffer(int depthTextureHandle, int depthRenderBufferHandle,
                    int openGLVersion, Resources resources) {
 
         int[] temp = new int[1];
@@ -54,8 +54,6 @@ public class GeometryBuffer implements Closeable {
 
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, colorTextureHandle);
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB5_A1, width, height, 0,
-                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
         //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
@@ -65,14 +63,14 @@ public class GeometryBuffer implements Closeable {
 
         GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
                 GLES20.GL_TEXTURE_2D, colorTextureHandle, 0);
-        if(depthRenderBufferHandle != -2) {
+        if(depthRenderBufferHandle != -1) {
             GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
                     GLES20.GL_RENDERBUFFER, depthRenderBufferHandle);
 
             //bind depthTextureHandle as color to depthPassFrameBufferHandle
             GLES20.glGenFramebuffers(1, temp, 0);
             depthPassFrameBufferHandle = temp[0];
-            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, depthPassFrameBufferHandle);
             GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
                     GLES20.GL_TEXTURE_2D, depthTextureHandle, 0);
             GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
@@ -184,7 +182,9 @@ public class GeometryBuffer implements Closeable {
     }
 
     @TargetApi(18)
-    public void finishGeneratingMeshes30() {
+    public void finishGeneratingMeshes30(int offsetInBytes, int numberOfSprites) {
+        GLES30.glFlushMappedBufferRange(GLES30.GL_ARRAY_BUFFER, offsetInBytes,
+                numberOfSprites * SPRITE_SIZE_IN_BYTES30);
         GLES30.glUnmapBuffer(GLES30.GL_ARRAY_BUFFER);
     }
 
@@ -299,9 +299,6 @@ public class GeometryBuffer implements Closeable {
     @TargetApi(18)
     private static void renderSprites30(int offsetInBytes, int spriteCount,
                                         int spritePositionHandle, int spriteTexCoordinatesHandle) {
-
-        GLES30.glFlushMappedBufferRange(GLES30.GL_ARRAY_BUFFER, offsetInBytes,
-                spriteCount * SPRITE_SIZE_IN_BYTES30);
         GLES30.glVertexAttribPointer(spritePositionHandle, 4,
                 GLES30.GL_FLOAT, false, 8, offsetInBytes);
 
@@ -462,7 +459,7 @@ public class GeometryBuffer implements Closeable {
         spriteBuffer.position(oldPosition);
     }
 
-    public void resize(int width, int height) {
+    public void setSize(int width, int height) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, colorTextureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB5_A1, width, height, 0,
                 GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
@@ -475,10 +472,8 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDeleteTextures(1, temp, 0);
         temp[0] = frameBufferHandle;
         GLES20.glDeleteFramebuffers(1, temp, 0);
-        if(depthPassFrameBufferHandle != -2) {
-            temp[0] = depthPassFrameBufferHandle;
-            GLES20.glDeleteFramebuffers(1, temp, 0);
-        }
+        temp[0] = depthPassFrameBufferHandle;
+        GLES20.glDeleteFramebuffers(1, temp, 0);
         //TODO close the shaders
     }
 }

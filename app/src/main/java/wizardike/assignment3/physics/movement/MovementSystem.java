@@ -13,7 +13,7 @@ import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
 
 public class MovementSystem {
-    private final ComponentStorage<Movement> movementComponentStorage;
+    final ComponentStorage<Movement> movementComponentStorage;
 
     public MovementSystem() {
         movementComponentStorage = new ComponentStorage<>(Movement.class);
@@ -68,6 +68,10 @@ public class MovementSystem {
         for(int i = 0; i != movementCount; ++i) {
             movements[i].update(frameTime);
         }
+    }
+
+    public int indexOf(int entity, Movement movement) {
+        return movementComponentStorage.indexOf(entity, movement);
     }
 
     public Movement[] getMovements() {

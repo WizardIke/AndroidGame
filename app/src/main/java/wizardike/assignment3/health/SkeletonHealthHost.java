@@ -11,7 +11,7 @@ import wizardike.assignment3.networking.SystemIds;
 import static wizardike.assignment3.networking.NetworkMessageTypes.setHealth;
 
 public class SkeletonHealthHost extends HealthHost {
-    private static final int id = 1;
+    private static final int id = 6;
 
     private static final float armorToughness = 0.1f;
     private static final float startingFireResistance = 0.2f;
@@ -25,9 +25,9 @@ public class SkeletonHealthHost extends HealthHost {
     private static final int awesomenessForKill = 1;
 
     static void registerLoader() {
-        HealthHostLoader.addLoader(id, new HealthHostLoader.Loader() {
+        HealthLoader.addLoader(id, new HealthLoader.Loader() {
             @Override
-            public HealthHost load(DataInputStream save) throws IOException {
+            public Health load(DataInputStream save) throws IOException {
                 return new SkeletonHealthHost(save);
             }
         });

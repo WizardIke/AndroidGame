@@ -44,18 +44,14 @@ public class LightBuffer {
     private boolean isFirstLight;
     private int width, height;
 
-    LightBuffer(int width, int height, Resources resources, int depthTextureHandle,
+    LightBuffer(Resources resources, int depthTextureHandle,
                 boolean supportsDepthTexture) {
         this.depthTextureHandle = depthTextureHandle;
-        this.width = width;
-        this.height = height;
         int[] temp = new int[1];
         //make the light texture
         GLES20.glGenTextures(1, temp, 0);
         lightTextureHandle = temp[0];
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, lightTextureHandle);
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, width, height, 0,
-                GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);
         //the buffer size is the same as the screen size so GL_NEAREST sampling is good.
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
@@ -1043,7 +1039,7 @@ public class LightBuffer {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
     }
 
-    public void resize(int width, int height) {
+    public void setSize(int width, int height) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, lightTextureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, width, height, 0,
                 GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);

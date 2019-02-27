@@ -2,19 +2,16 @@ package wizardike.assignment3.health;
 
 import wizardike.assignment3.awesomeness.Awesomeness;
 import wizardike.assignment3.levels.Level;
-import wizardike.assignment3.networking.SystemIds;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import static wizardike.assignment3.networking.NetworkMessageTypes.setHealth;
-
 public class PlayerHealthHost extends HealthHost {
-    private static final int id = 3;
+    private static final int id = 4;
 
     static void registerLoader() {
-        HealthComponentLoader.addLoader(id, new HealthComponentLoader.Loader() {
+        HealthLoader.addLoader(id, new HealthLoader.Loader() {
             @Override
             public Health load(DataInputStream save) throws IOException {
                 return new PlayerHealthHost(save);
@@ -38,14 +35,8 @@ public class PlayerHealthHost extends HealthHost {
 
             final DataOutputStream networkOut = level.getEngine().getNetworkConnection().getNetworkOut();
             try {
-                networkOut.writeInt(20);
-                int levelIndex = level.getEngine().getMainWorld().getIdOfLevel(level);
-                networkOut.writeInt(levelIndex);
-                networkOut.writeInt(SystemIds.healthSystem);
-                HealthSystem healthSystem = level.getHealthSystem();
-                networkOut.writeInt(healthSystem.indexOf(target, this));
-                networkOut.writeInt(setHealth);
-                networkOut.writeFloat(health);
+                final int levelIndex = level.getEngine().getMainWorld().getIdOfLevel(level);
+                sync(level.getHealthSystem(), levelIndex, target, networkOut);
             } catch (IOException e) {
                 level.getEngine().onError();
             }

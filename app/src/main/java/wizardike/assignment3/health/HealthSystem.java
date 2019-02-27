@@ -11,8 +11,6 @@ import wizardike.assignment3.entity.EntityAllocator;
 import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.levels.Level;
 
-import static wizardike.assignment3.networking.NetworkMessageTypes.setHealth;
-
 public class HealthSystem {
     private ComponentStorage<Health> healthComponentStorage;
 
@@ -27,7 +25,7 @@ public class HealthSystem {
         Health[] healths = new Health[healthComponentCount];
         for(int i = 0; i != healthComponentCount; ++i) {
             final int id = save.readInt();
-            healths[i] = HealthComponentLoader.load(id, save);
+            healths[i] = HealthLoader.load(id, save);
         }
         int[] healthComponentEntities = new int[healthComponentCount];
         for(int i = 0; i != healthComponentCount; ++i) {

@@ -25,10 +25,11 @@ public class FireBoltParticle {
         Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addTransparentSprite(entity, sprite);
-        level.getLightingSystem().addPointLight(entity, new PointLight(position, 0.0f, 0.0f, 1.5f, radius, 0.8f, 0.5f, 0.2f));
+        final PointLight light = new PointLight(position, 0.0f, 0.0f, 1.5f, radius, 0.8f, 0.5f, 0.2f);
+        level.getLightingSystem().addPointLight(entity, light);
         FireBoltAnimation fireBoltAnimation = new FireBoltAnimation(spriteSheet, 36, sprite);
         level.getFireBoltAnimationSystem().addFireBoltAnimation(entity, fireBoltAnimation);
-        Explode explode = new Explode(position, damage, lifeTime, dirX * speed, dirY * speed);
+        final Explode explode = new Explode(position, damage, lifeTime, dirX * speed, dirY * speed);
         TriggeredCircleHitBox triggeredCircleHitBox = new TriggeredCircleHitBox(position, radius, mass, explode);
         level.getCollisionSystem().addCollidable(entity, triggeredCircleHitBox);
         Faction faction = level.getFactionSystem().getFaction(caster);

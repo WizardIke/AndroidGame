@@ -10,12 +10,12 @@ import wizardike.assignment3.networking.SystemIds;
 import static wizardike.assignment3.networking.NetworkMessageTypes.setHealth;
 
 public class HealthHost extends Health {
-    private static final int id = 0;
+    private static final int id = 1;
 
     static void registerLoader() {
-        HealthHostLoader.addLoader(id, new HealthHostLoader.Loader() {
+        HealthLoader.addLoader(id, new HealthLoader.Loader() {
             @Override
-            public HealthHost load(DataInputStream save) throws IOException {
+            public Health load(DataInputStream save) throws IOException {
                 return new HealthHost(save);
             }
         });
@@ -34,14 +34,8 @@ public class HealthHost extends Health {
         float damageTaken = super.takeDamage(level, attacker, target, amount, type);
         final DataOutputStream networkOut = level.getEngine().getNetworkConnection().getNetworkOut();
         try {
-            networkOut.writeInt(20);
-            int levelIndex = level.getEngine().getMainWorld().getIdOfLevel(level);
-            networkOut.writeInt(levelIndex);
-            networkOut.writeInt(SystemIds.healthSystem);
-            HealthHostSystem healthSystem = level.getHealthHostSystem();
-            networkOut.writeInt(healthSystem.indexOf(target, this));
-            networkOut.writeInt(setHealth);
-            networkOut.writeFloat(health);
+            final int levelIndex = level.getEngine().getMainWorld().getIdOfLevel(level);
+            sync(level.getHealthSystem(), levelIndex, target, networkOut);
         } catch (IOException e) {
             level.getEngine().onError();
         }
@@ -49,7 +43,7 @@ public class HealthHost extends Health {
         return damageTaken;
     }
 
-    public void sync(HealthHostSystem healthSystem, int levelIndex, int thisEntity, final DataOutputStream networkOut) throws IOException {
+    void sync(HealthSystem healthSystem, int levelIndex, int thisEntity, final DataOutputStream networkOut) throws IOException {
         networkOut.writeInt(16);
         networkOut.writeInt(levelIndex);
         networkOut.writeInt(SystemIds.healthSystem);

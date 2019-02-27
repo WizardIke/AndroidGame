@@ -21,7 +21,7 @@ public class FireBoltParticleHost {
                       float speed, float lifeTime, int caster, float damage, WalkingSpriteSheet spriteSheet) {
         int entity = level.getEngine().getEntityAllocator().allocate();
         Vector2 position = new Vector2(posX, posY);
-        level.getPositionHostSystem().addPosition(entity, position);
+        level.getPositionSystem().addPosition(entity, position);
         Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addTransparentSprite(entity, sprite);

@@ -20,7 +20,7 @@ public class Health {
     public float health;
 
     static void registerLoader() {
-        HealthComponentLoader.addLoader(id, new HealthComponentLoader.Loader() {
+        HealthLoader.addLoader(id, new HealthLoader.Loader() {
             @Override
             public Health load(DataInputStream save) throws IOException {
                 return new Health(save);

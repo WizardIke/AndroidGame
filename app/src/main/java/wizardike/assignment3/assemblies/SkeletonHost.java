@@ -27,9 +27,9 @@ public class SkeletonHost {
     public static int create(Level level, int master, float health, float maxHealth,
                       float posX, float posY, float speed, WalkingSpriteSheet spriteSheet) {
         int entity = level.getEngine().getEntityAllocator().allocate();
-        level.getHealthHostSystem().addHealth(entity, new SkeletonHealthHost(maxHealth, health));
+        level.getHealthSystem().addHealth(entity, new SkeletonHealthHost(maxHealth, health));
         Vector2 position = new Vector2(posX, posY);
-        level.getPositionHostSystem().addPosition(entity, position);
+        level.getPositionSystem().addPosition(entity, position);
         Bite bite = new Bite(biteTime, biteDamage);
         level.getCollisionSystem().addCollidable(entity, new TriggeredCircleHitBox(position, radius,
                 (float)(Math.random() * massRange + minMass), bite));
@@ -38,7 +38,7 @@ public class SkeletonHost {
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addSprite(entity, sprite);
         Movement movement = new Movement(position); //Should be host
-        level.getMovementSystem().addMovement(entity, movement);
+        level.getMovementHostSystem().addMovement(entity, movement);
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, animationLength);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         Faction faction = level.getFactionSystem().getFaction(master);

@@ -114,9 +114,10 @@ public class TextureManager implements Closeable{
                         bitmap.recycle();
                         //copy image to texture
                         int offsetX = (int)(textureCoordinates.getX() * textureWidth);
-                        int offsetY = (int)((1.0f - textureCoordinates.getY()) * textureHeight - textureWidthAndWight);
+                        int offsetY = (int)(textureCoordinates.getY() * textureHeight);
                         if(textureHandle != -1) {
-                            GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
+                            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
+                            GLUtils.texSubImage2D(GLES20.GL_TEXTURE_2D, 0, offsetX, offsetY, resizedBitmap);
                         }
                         resizedBitmap.recycle();
                         synchronized (TextureManager.this) {
@@ -141,7 +142,7 @@ public class TextureManager implements Closeable{
      * Must be called from the rendering thread.
      */
     public synchronized void reload() {
-        createTexture();
+        createAndBindTexture();
 
         final int textureWidthAndWight = textureWidth / textureSubAllocator.getWidth();
         final Resources resources = engine.getGraphicsManager().getResources();
@@ -157,19 +158,19 @@ public class TextureManager implements Closeable{
             bitmap.recycle();
             final Vector4 textureCoordinates = descriptor.textureCoordinates;
             final int offsetX = (int)(textureCoordinates.getX() * textureWidth);
-            final int offsetY = (int)((1.0f - textureCoordinates.getY()) * textureHeight - textureWidthAndWight);
-            GLUtils.texSubImage2D(textureHandle, 0, offsetX, offsetY, resizedBitmap);
+            final int offsetY = (int)(textureCoordinates.getY() * textureHeight);
+            GLUtils.texSubImage2D(GLES20.GL_TEXTURE_2D, 0, offsetX, offsetY, resizedBitmap);
             resizedBitmap.recycle();
         }
     }
 
-    private void createTexture() {
+    private void createAndBindTexture() {
         int[] temp = new int[1];
         GLES20.glGenTextures(1, temp, 0);
         textureHandle = temp[0];
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB565, textureWidth, textureHeight, 0,
-                GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null);
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA4, textureWidth, textureHeight, 0,
+                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
         //should probably be based on user settings
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);

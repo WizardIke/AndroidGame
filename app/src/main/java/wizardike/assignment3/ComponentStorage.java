@@ -1,8 +1,10 @@
 package wizardike.assignment3;
 
+import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 
@@ -47,10 +49,10 @@ public class ComponentStorage<E> {
 
     private void initEmpty() {
         lookup = new SparseArray<>();
-        components = (E[])Array.newInstance(arrayCreator, 8);
-        entities = new int[8];
+        components = null;
+        entities = null;
         size = 0;
-        capacity = 8;
+        capacity = 0;
     }
 
     /**
@@ -84,15 +86,40 @@ public class ComponentStorage<E> {
     }
 
     /**
-     * Removes all components in this ComponentStorage from an entity
+     * Removes all components in this ComponentStorage from an entity.
+     * Can be called even if the entity doesn't have any components of this type.
      * @param entity The entity to remove components from
      */
     public void removeComponents(int entity) {
         int[] indices = lookup.get(entity);
+        if(indices == null) return;
         for(int index : indices) {
             moveLastComponent(index);
+            --size;
         }
         lookup.remove(entity);
+    }
+
+    /**
+     * Removes all components in this ComponentStorage from an entity.
+     * All remaining components are left in the same order.
+     * Can be called even if the entity doesn't have any components of this type.
+     * @param entity The entity to remove components from
+     */
+    public void removeComponentsKeepingOrdering(int entity) {
+        int[] indices = lookup.get(entity);
+        if(indices == null) return;
+        Arrays.sort(indices);
+        int shift = 0;
+        for(int i = 0; i != size; ++i) {
+            if(indices[shift] == i) {
+                ++shift;
+            } else {
+                moveComponent(i, i - shift);
+            }
+        }
+        lookup.remove(entity);
+        size -= indices.length;
     }
 
     public void removeComponent(int entity, E component) {
@@ -102,6 +129,7 @@ public class ComponentStorage<E> {
             final int index = indices[i];
             if(components[index] == component) {
                 moveLastComponent(index);
+                --size;
                 break;
             }
             ++i;
@@ -121,15 +149,18 @@ public class ComponentStorage<E> {
 
     private void moveLastComponent(int newIndex) {
         //moved last component into the position newIndex
-        final int lastIndex = size - 1;
-        components[newIndex] = components[lastIndex];
-        entities[newIndex] = entities[lastIndex];
+        moveComponent(size - 1, newIndex);
+    }
+
+    private void moveComponent(int from, int to) {
+        components[to] = components[from];
+        entities[to] = entities[from];
 
         //let last entity know that its component moved
-        int[] indicesToAdjust = lookup.get(entities[lastIndex]);
+        int[] indicesToAdjust = lookup.get(entities[from]);
         for(int i = 0; i != indicesToAdjust.length; ++i) {
-            if(indicesToAdjust[i] == lastIndex) {
-                indicesToAdjust[i] = newIndex;
+            if(indicesToAdjust[i] == from) {
+                indicesToAdjust[i] = to;
                 break;
             }
         }
@@ -148,21 +179,27 @@ public class ComponentStorage<E> {
      * @param entity The entity to get the components for
      * @return All components owned by the entity
      */
-    public Iterator<E> getComponents(int entity) {
+    public Iterable<E> getComponents(int entity) {
         final int[] indices = lookup.get(entity, null);
         if(indices == null) return null;
 
         final E[] components = this.components;
-        return new Iterator<E>() {
-            private int index = 0;
+        return new Iterable<E>() {
+            @NonNull
+            @Override
+            public Iterator iterator() {
+                return new Iterator<E>() {
+                    private int index = 0;
 
-            public boolean hasNext() {
-                return index != indices.length;
-            }
-            public E next() {
-                final E element = components[indices[index]];
-                ++index;
-                return element;
+                    public boolean hasNext() {
+                        return index != indices.length;
+                    }
+                    public E next() {
+                        final E element = components[indices[index]];
+                        ++index;
+                        return element;
+                    }
+                };
             }
         };
     }
@@ -198,7 +235,7 @@ public class ComponentStorage<E> {
         components[index2] = tempComponent;
         entities[index2] = tempEntity;
 
-        int[] indicesToAdjust = lookup.get(entities[tempEntity]); //entity that used to be at index1
+        int[] indicesToAdjust = lookup.get(tempEntity); //entity that used to be at index1
         for(int i = 0; i != indicesToAdjust.length; ++i) {
             if(indicesToAdjust[i] == index1) {
                 indicesToAdjust[i] = index2;
@@ -216,7 +253,7 @@ public class ComponentStorage<E> {
     }
 
     private void increaseCapacity() {
-        capacity = capacity + (capacity >> 1);
+        capacity = capacity + (capacity >> 1) + 1;
         final E[] newComponents = (E[])Array.newInstance(arrayCreator, capacity);
         final int oldSize = size;
         final E[] oldComponents = components;

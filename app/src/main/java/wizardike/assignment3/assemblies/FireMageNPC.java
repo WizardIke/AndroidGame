@@ -19,9 +19,9 @@ import wizardike.assignment3.physics.movement.Movement;
  * Created by Isaac on 24/01/2017.
  */
 public class FireMageNPC {
-    private static final float startingSpeed = 0.2f;
+    private static final float startingSpeed = 0.2f * 6.0f;
     private static final float startingMaxHealth = 100f;
-    private static final float radius = 0.02f;
+    private static final float radius = 0.02f * 6.0f;
     private static final float mass = 70.0f;
 
     private final static float armorToughness = 0.1f;
@@ -36,7 +36,8 @@ public class FireMageNPC {
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addSprite(entity, sprite);
         level.getLightingSystem().addPointLight(entity, new PointLight(position, 0.0f, 0.0f, 1.5f, radius, 0.8f, 0.7f, 0.7f));
-        Movement movement = new Movement(position);
+        final Movement movement = new Movement(position);
+        level.getMovementSystem().addMovement(entity, movement);
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);

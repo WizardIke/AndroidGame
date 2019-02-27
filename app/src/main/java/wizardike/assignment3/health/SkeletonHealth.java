@@ -10,6 +10,8 @@ import wizardike.assignment3.levels.Level;
  * Created by Isaac on 28/08/2017.
  */
 public class SkeletonHealth extends Health {
+    private static final int id = 5;
+
     private static final float armorToughness = 0.1f;
     private static final float startingFireResistance = 0.2f;
     private static final float startingColdResistance = 1.25f;
@@ -21,6 +23,14 @@ public class SkeletonHealth extends Health {
 
     private static final int awesomenessForKill = 1;
 
+    static void registerLoader() {
+        HealthLoader.addLoader(id, new HealthLoader.Loader() {
+            @Override
+            public Health load(DataInputStream save) throws IOException {
+                return new SkeletonHealth(save);
+            }
+        });
+    }
 
     public SkeletonHealth(float maxHealth, float health) {
         super(new Resistances(startingFireResistance, startingColdResistance, startingLightningResistance,

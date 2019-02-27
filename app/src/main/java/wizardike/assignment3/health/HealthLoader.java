@@ -5,7 +5,7 @@ import android.util.SparseArray;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-public class HealthComponentLoader {
+public class HealthLoader {
     interface Loader {
         Health load(DataInputStream save) throws IOException;
     }
@@ -20,6 +20,9 @@ public class HealthComponentLoader {
         NPCHealth.registerLoader();
         PlayerHealth.registerLoader();
         PlayerHealthHost.registerLoader();
+        HealthHost.registerLoader();
+        SkeletonHealth.registerLoader();
+        SkeletonHealthHost.registerLoader();
     }
 
     public static Health load(int id, DataInputStream save) throws IOException {

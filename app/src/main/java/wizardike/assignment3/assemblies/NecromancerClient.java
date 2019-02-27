@@ -43,6 +43,7 @@ public class NecromancerClient {
         level.getGeometrySystem().addSprite(entity, sprite);
         level.getLightingSystem().addPointLight(entity, new PointLight(position, 0.0f, 0.0f, 1.5f, radius, 0.8f, 0.7f, 0.7f));
         Movement movement = new Movement(position);
+        level.getMovementSystem().addMovement(entity, movement);
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);

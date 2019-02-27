@@ -9,7 +9,6 @@ import java.util.Date;
 import wizardike.assignment3.assemblies.EntityLoadedCallback;
 import wizardike.assignment3.assemblies.FireMagePlayer;
 import wizardike.assignment3.assemblies.NecromancerPlayer;
-import wizardike.assignment3.assemblies.Player;
 import wizardike.assignment3.levels.Level;
 
 public class PlayerInfo {

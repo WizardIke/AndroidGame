@@ -31,12 +31,13 @@ public class FireMageHost {
     public static int create(Level level, final float posX, final float posY, WalkingSpriteSheet spriteSheet) {
         int entity = level.getEngine().getEntityAllocator().allocate();
         Vector2 position = new Vector2(posX, posY);
-        level.getPositionHostSystem().addPosition(entity, position);
+        level.getPositionSystem().addPosition(entity, position);
         Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addSprite(entity, sprite);
         level.getLightingSystem().addPointLight(entity, new PointLight(position, 0.0f, 0.0f, 1.5f, radius, 0.8f, 0.7f, 0.7f));
-        Movement movement = new Movement(position);
+        final Movement movement = new Movement(position);
+        level.getMovementHostSystem().addMovement(entity, movement);
         WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
@@ -47,8 +48,8 @@ public class FireMageHost {
                 startingResistance, startingResistance, startingResistance,
                 startingResistance, startingResistance), armorToughness, startingMaxHealth,
                 startingMaxHealth);
-        level.getHealthHostSystem().addHealth(entity, health);
-        level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
+        level.getHealthSystem().addHealth(entity, health);
+        level.getRegenerationHostSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
         //level.getUserInterfaceSystem().addAttackTalent(entity, new FireBoltSpellHost(0.4f * 6.0f, 0.5f, 2.0f * 6.0f, 10.0f, spriteSheet));
         //TODO addCollidable host spells
         //TODO addCollidable host movement component

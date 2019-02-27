@@ -7,6 +7,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 
 import wizardike.assignment3.AnalogStick;
+import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.physics.movement.Movement;
 
 /**
@@ -14,28 +15,25 @@ import wizardike.assignment3.physics.movement.Movement;
  */
 public class PlayerMovementController implements AnalogStick.OnRotationListener {
     protected Movement movement;
-    protected float maxSpeed;
 
-    public PlayerMovementController(Movement movement, float maxSpeed) {
-        this.movement = movement;
-        this.maxSpeed = maxSpeed;
+    public PlayerMovementController(Vector2 position, float maxSpeed) {
+        this.movement = new Movement(position);
+        movement.currentSpeed = maxSpeed;
     }
 
-    public PlayerMovementController(DataInputStream save, final List<Movement> remappingTable) throws IOException {
-        movement = remappingTable.get(save.readInt());
-        maxSpeed = save.readFloat();
+    public PlayerMovementController(DataInputStream save, final Vector2[] remappingTable) throws IOException {
+        movement = new Movement(save, remappingTable);
     }
 
-    public void save(DataOutputStream save, final IdentityHashMap<Movement, Integer> remappingTable) throws IOException {
-        save.writeInt(remappingTable.get(movement));
-        save.writeFloat(maxSpeed);
+    public void save(DataOutputStream save, final IdentityHashMap<Vector2, Integer> remappingTable) throws IOException {
+        movement.save(save, remappingTable);
     }
 
     @Override
     public void start(float directionX, float directionY) {
         movement.directionX = directionX;
         movement.directionY = directionY;
-        movement.currentSpeed = maxSpeed;
+
     }
 
     @Override
@@ -48,6 +46,5 @@ public class PlayerMovementController implements AnalogStick.OnRotationListener 
     public void stop(float directionX, float directionY) {
         movement.directionX = directionX;
         movement.directionY = directionY;
-        movement.currentSpeed = 0.0f;
     }
 }

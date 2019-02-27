@@ -19,15 +19,15 @@ import wizardike.assignment3.graphics.Sprite;
 import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
 import wizardike.assignment3.graphics.SpriteSheets.SpriteSheetSystem;
 import wizardike.assignment3.health.Health;
-import wizardike.assignment3.health.HealthHostSystem;
 import wizardike.assignment3.health.HealthSystem;
+import wizardike.assignment3.health.RegenerationHostSystem;
 import wizardike.assignment3.health.RegenerationSystem;
 import wizardike.assignment3.networking.NetworkConnection;
 import wizardike.assignment3.networking.Server;
 import wizardike.assignment3.networking.SystemIds;
 import wizardike.assignment3.physics.movement.Movement;
+import wizardike.assignment3.physics.movement.MovementHostSystem;
 import wizardike.assignment3.physics.movement.MovementSystem;
-import wizardike.assignment3.position.PositionHostSystem;
 import wizardike.assignment3.position.PositionSystem;
 import wizardike.assignment3.updating.UpdatingSystem;
 import wizardike.assignment3.entity.EntityUpdater;
@@ -48,8 +48,7 @@ public class Level {
 
     private DestructionSystem destructionSystem;
     private UpdatingSystem updatingSystem;
-    private PositionSystem positionSystem = null;
-    private PositionHostSystem positionHostSystem = null;
+    private PositionSystem positionSystem;
     private CollisionSystem collisionSystem;
     private GeometrySystem geometrySystem;
     private LightingSystem lightingSystem;
@@ -57,10 +56,11 @@ public class Level {
     private CategorySystem categorySystem;
     private FactionSystem factionSystem;
     private BasicAIControllerSystem basicAIControllerSystem;
-    private HealthSystem healthSystem = null;
-    private HealthHostSystem healthHostSystem = null;
-    private RegenerationSystem regenerationSystem;
-    private MovementSystem movementSystem;
+    private HealthSystem healthSystem;
+    private RegenerationSystem regenerationSystem = null;
+    private RegenerationHostSystem regenerationHostSystem = null;
+    private MovementSystem movementSystem = null;
+    private MovementHostSystem movementHostSystem = null;
     private Camera camera;
     private SpriteSheetSystem spriteSheetSystem;
     private WalkingAnimationSystem walkingAnimationSystem;
@@ -76,11 +76,7 @@ public class Level {
 
         destructionSystem = new DestructionSystem();
         updatingSystem = new UpdatingSystem();
-        if(host) {
-            positionHostSystem = new PositionHostSystem();
-        } else {
-            positionSystem = new PositionSystem();
-        }
+        positionSystem = new PositionSystem();
         collisionSystem = new CollisionSystem();
         geometrySystem = new GeometrySystem();
         lightingSystem = new LightingSystem();
@@ -88,13 +84,14 @@ public class Level {
         categorySystem = new CategorySystem();
         factionSystem = new FactionSystem();
         basicAIControllerSystem = new BasicAIControllerSystem();
+        healthSystem = new HealthSystem();
         if(host) {
-            healthHostSystem = new HealthHostSystem();
+            regenerationHostSystem = new RegenerationHostSystem();
+            movementHostSystem = new MovementHostSystem();
         } else {
-            healthSystem = new HealthSystem();
+            regenerationSystem = new RegenerationSystem();
+            movementSystem = new MovementSystem();
         }
-        regenerationSystem = new RegenerationSystem();
-        movementSystem = new MovementSystem();
         camera = new Camera(null, 1.0f);
         spriteSheetSystem = new SpriteSheetSystem();
         walkingAnimationSystem = new WalkingAnimationSystem();
@@ -111,14 +108,8 @@ public class Level {
 
         final EntityUpdater entityUpdater = new EntityUpdater();
         destructionSystem = new DestructionSystem(); //There shouldn't have been any entities pending destruction when we saved.
-        Vector2[] positionRemappingTable;
-        if(host) {
-            positionHostSystem = new PositionHostSystem(save, engine, entityUpdater);
-            positionRemappingTable = positionHostSystem.getPositions();
-        } else {
-            positionSystem = new PositionSystem(save, engine, entityUpdater);
-            positionRemappingTable = positionSystem.getPositions();
-        }
+        positionSystem = new PositionSystem(save, engine, entityUpdater);
+        final Vector2[] positionRemappingTable = positionSystem.getPositions();;
         collisionSystem = new CollisionSystem(save, engine, entityUpdater, positionRemappingTable);
         geometrySystem = new GeometrySystem(save, engine, entityUpdater, positionRemappingTable);
         lightingSystem = new LightingSystem(save, engine, entityUpdater, positionRemappingTable);
@@ -126,18 +117,16 @@ public class Level {
         categorySystem = new CategorySystem(save, engine, entityUpdater);
         factionSystem = new FactionSystem(save, engine, entityUpdater);
         basicAIControllerSystem = new BasicAIControllerSystem(save, engine, entityUpdater);
-        Health[] healthRemappingTable;
+        healthSystem = new HealthSystem(save, engine, entityUpdater);
+        final Health[] healthRemappingTable = healthSystem.getHealths();
         if(host) {
-            healthHostSystem = new HealthHostSystem(save, engine, entityUpdater);
-            healthRemappingTable = healthHostSystem.getHealths();
+            regenerationHostSystem = new RegenerationHostSystem(save, engine, entityUpdater, healthRemappingTable);
+            movementHostSystem = new MovementHostSystem(save, engine, entityUpdater, positionRemappingTable);
         } else {
-            healthSystem = new HealthSystem(save, engine, entityUpdater);
-            healthRemappingTable = healthSystem.getHealths();
+            regenerationSystem = new RegenerationSystem(save, engine, entityUpdater, healthRemappingTable);
+            movementSystem = new MovementSystem(save, engine, entityUpdater, positionRemappingTable);
         }
-        regenerationSystem = new RegenerationSystem(save, engine, entityUpdater, healthRemappingTable);
-        movementSystem = new MovementSystem(save, engine, entityUpdater, positionRemappingTable);
         camera = new Camera(save, positionRemappingTable);
-
         Sprite[][] spritesToRemap = new Sprite[2][];
         spritesToRemap[0] = geometrySystem.getSprites();
         spritesToRemap[1] = geometrySystem.getTransparentSprites();
@@ -208,10 +197,6 @@ public class Level {
         return positionSystem;
     }
 
-    public PositionHostSystem getPositionHostSystem() {
-        return positionHostSystem;
-    }
-
     public BasicAIControllerSystem getBasicAIControllerSystem() {
         return basicAIControllerSystem;
     }
@@ -220,16 +205,20 @@ public class Level {
         return healthSystem;
     }
 
-    public HealthHostSystem getHealthHostSystem() {
-        return healthHostSystem;
-    }
-
     public RegenerationSystem getRegenerationSystem() {
         return regenerationSystem;
     }
 
+    public RegenerationHostSystem getRegenerationHostSystem() {
+        return regenerationHostSystem;
+    }
+
     public MovementSystem getMovementSystem() {
         return movementSystem;
+    }
+
+    public MovementHostSystem getMovementHostSystem() {
+        return movementHostSystem;
     }
 
     public Camera getCamera() {
@@ -248,19 +237,21 @@ public class Level {
         return fireBoltAnimationSystem;
     }
 
-    public void update(Engine engine) {
-        regenerationSystem.update(this);
+    public void update() {
+        if(regenerationHostSystem != null) {
+            regenerationHostSystem.update(this);
+        } else {
+            regenerationSystem.update(this);
+        }
         basicAIControllerSystem.update(this);
         collisionSystem.update(this); //handle collisions between objects
-        if(healthHostSystem != null) {
-            healthHostSystem.update(this);
+        if(movementHostSystem != null) {
+            movementHostSystem.update(this);
+        } else {
+            movementSystem.update(this);
         }
-        movementSystem.update(this);
         walkingAnimationSystem.update(this);
         fireBoltAnimationSystem.update(this);
-        if(positionHostSystem != null) {
-            positionHostSystem.update(this);
-        }
         updatingSystem.update(this); //update anything that needs updating
         geometrySystem.update(this); //render geometry to a buffer
         lightingSystem.update(this); //apply lighting and shadows
@@ -268,39 +259,38 @@ public class Level {
     }
 
     public void save(DataOutputStream save) throws IOException {
-        IdentityHashMap<Vector2, Integer> positionRemappingTable;
-        if(positionSystem != null) {
-            positionSystem.save(save);
-            positionRemappingTable = positionSystem.getRemappingTable();
-        } else {
-            positionHostSystem.save(save);
-            positionRemappingTable = positionSystem.getRemappingTable();
-        }
+        positionSystem.save(save);
+        IdentityHashMap<Vector2, Integer> positionRemappingTable
+                = positionSystem.getRemappingTable();
         collisionSystem.save(save, positionRemappingTable);
         geometrySystem.save(save, positionRemappingTable);
-        IdentityHashMap<Sprite, Integer> spriteRemappingTable = geometrySystem.getSpriteRemappingTable();
+        IdentityHashMap<Sprite, Integer> spriteRemappingTable
+                = geometrySystem.getSpriteRemappingTable();
         lightingSystem.save(save, positionRemappingTable);
         awesomenessSystem.save(save);
         categorySystem.save(save);
         factionSystem.save(save);
         basicAIControllerSystem.save(save);
-        IdentityHashMap<Health, Integer> healthRemappingTable;
-        if(healthSystem != null) {
-            healthSystem.save(save);
-            healthRemappingTable = healthSystem.getHealthRemappingTable();
+        healthSystem.save(save);
+        final IdentityHashMap<Health, Integer> healthRemappingTable
+                = healthSystem.getHealthRemappingTable();
+        IdentityHashMap<Movement, Integer> movementRemappingTable;
+        if(regenerationHostSystem != null) {
+            regenerationHostSystem.save(save, healthRemappingTable);
+            movementHostSystem.save(save, positionRemappingTable);
+            movementRemappingTable = movementHostSystem.getRemappingTable();
         } else {
-            healthHostSystem.save(save);
-            healthRemappingTable = healthHostSystem.getHealthRemappingTable();
+            regenerationSystem.save(save, healthRemappingTable);
+            movementSystem.save(save, positionRemappingTable);
+            movementRemappingTable = movementSystem.getRemappingTable();
         }
-        regenerationSystem.save(save, healthRemappingTable);
-        movementSystem.save(save, positionRemappingTable);
-        IdentityHashMap<Movement, Integer> movementRemappingTable = movementSystem.getRemappingTable();
         camera.save(save, positionRemappingTable);
         spriteSheetSystem.save(save);
-        IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable = spriteSheetSystem.getRemappingTable();
+        final IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable
+                = spriteSheetSystem.getRemappingTable();
         walkingAnimationSystem.save(save, spriteSheetRemappingTable, movementRemappingTable,
                 spriteRemappingTable);
-        IdentityHashMap<Sprite, Integer> transparentSpriteRemappingTable
+        final IdentityHashMap<Sprite, Integer> transparentSpriteRemappingTable
                 = geometrySystem.getTransparentSpriteRemappingTable();
         fireBoltAnimationSystem.save(save, spriteSheetRemappingTable, transparentSpriteRemappingTable);
         updatingSystem.save(save, spriteSheetRemappingTable);
@@ -330,13 +320,16 @@ public class Level {
      * @param entity The entity to destroy
      */
     public void destroyEntity(int entity) {
+        if(regenerationHostSystem != null) {
+            regenerationHostSystem.removeRegenerations(entity);
+            movementHostSystem.removeMovements(entity);
+        } else {
+            regenerationSystem.removeRegenerations(entity);
+            movementSystem.removeMovements(entity);
+        }
         updatingSystem.removeAll(entity);
         collisionSystem.removeAll(entity);
-        if(positionSystem != null) {
-            positionSystem.removePositions(entity);
-        } else {
-            positionHostSystem.removePositions(entity);
-        }
+        positionSystem.removePositions(entity);
         geometrySystem.removeSprites(entity);
         geometrySystem.removeTransparentSprites(entity);
         lightingSystem.removeCircleShadowCasters(entity);
@@ -345,13 +338,7 @@ public class Level {
         awesomenessSystem.removeAwesomenesses(entity);
         categorySystem.removeCategories(entity);
         factionSystem.removeFactions(entity);
-        if(healthSystem != null) {
-            healthSystem.removeHealths(entity);
-        } else {
-            healthHostSystem.removeHealths(entity);
-        }
-        regenerationSystem.removeRegenerations(entity);
-        movementSystem.removeMovements(entity);
+        healthSystem.removeHealths(entity);
         spriteSheetSystem.removeSpriteSheets(entity);
         walkingAnimationSystem.removeWalkingAnimations(entity);
         fireBoltAnimationSystem.removeFireBoltAnimations(entity);
