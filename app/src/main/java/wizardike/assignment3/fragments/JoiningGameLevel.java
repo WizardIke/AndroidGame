@@ -32,7 +32,7 @@ public class JoiningGameLevel implements GameLevel {
             clientSocket.connect(new InetSocketAddress(previousGameLevel.ipBox.text, port), timeOut);
             main.networkConnection = new ClientConnection(clientSocket);
             new NecromancerClient(main, 0.0f, 0.0f);
-            main.player = new FireMageClient(main, previousGameLevel.nameBox.text, 0.5f, 0.5f);
+            main.player = new FireMageClientPlayer(main, previousGameLevel.nameBox.text, 0.5f, 0.5f);
             previousGameLevel.startGame(main);
         } catch (IOException e) {
             previousGameLevel.hostNotFound = true;

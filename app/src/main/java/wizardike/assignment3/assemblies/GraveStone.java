@@ -14,7 +14,7 @@ public class GraveStone {
         level.getPositionSystem().addPosition(entity, position);
         level.getCollisionSystem().addCollidable(entity, new AlignedRectangleHitBox(position, maxPosX - minPosX,
                 maxPosY - minPosY, Float.POSITIVE_INFINITY));
-        //TODO addCollidable sprite
+        //TODO add sprite
         return entity;
     }
 }

@@ -39,11 +39,13 @@ public class WorldUpdatingSystem {
     }
 
     public void addWorld(World world) {
+        world.start();
         worlds.add(world);
     }
 
     public void removeWorld(World world) {
         worlds.remove(world);
+        world.stop();
     }
 
     public void removeAllWorlds() {
@@ -54,9 +56,9 @@ public class WorldUpdatingSystem {
         return worlds;
     }
 
-    public void update(Engine engine) {
+    public void update() {
         for(World world : worlds) {
-            world.update(engine);
+            world.update();
         }
     }
 

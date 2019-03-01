@@ -3,8 +3,9 @@ package wizardike.assignment3.physics.Collision;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.AlignedRectangle;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
@@ -17,8 +18,8 @@ public class AlignedRectangleHitBox extends AlignedRectangle implements Collidab
     static void registerLoader() {
         CollidableLoader.addLoader(id, new CollidableLoader.Loader() {
             @Override
-            public Collidable load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-                return new AlignedRectangleHitBox(save, positionRemappingTable);
+            public Collidable load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new AlignedRectangleHitBox(save, deserializer);
             }
         });
     }
@@ -28,8 +29,8 @@ public class AlignedRectangleHitBox extends AlignedRectangle implements Collidab
         mMass = mass;
     }
 
-    private AlignedRectangleHitBox(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-        super(positionRemappingTable[save.readInt()], save.readFloat(), save.readFloat());
+    private AlignedRectangleHitBox(DataInputStream save, Deserializer deserializer) throws IOException {
+        super((Vector2)deserializer.getObject(save.readInt()), save.readFloat(), save.readFloat());
         mMass = save.readFloat();
     }
 
@@ -63,8 +64,8 @@ public class AlignedRectangleHitBox extends AlignedRectangle implements Collidab
     }
 
     @Override
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
-        save.writeInt(positionRemappingTable.get(getPosition()));
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
+        save.writeInt(serializer.getId(getPosition()));
         save.writeFloat(getWidth());
         save.writeFloat(getHeight());
         save.writeFloat(mMass);

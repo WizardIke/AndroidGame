@@ -3,8 +3,9 @@ package wizardike.assignment3.physics.Collision.CollisionHandlers;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.animation.FireBoltAnimation;
 import wizardike.assignment3.faction.Faction;
 import wizardike.assignment3.geometry.Vector2;
@@ -22,8 +23,8 @@ public class Explode implements CollisionHandler {
     static void registerLoader() {
         CollisionHandlerLoader.addLoader(id, new CollisionHandlerLoader.Loader() {
             @Override
-            public CollisionHandler load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-                return new Explode(save, positionRemappingTable);
+            public CollisionHandler load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new Explode(save, deserializer);
             }
         });
     }
@@ -43,8 +44,8 @@ public class Explode implements CollisionHandler {
         this.vY = vY;
     }
 
-    public Explode(DataInputStream saveData, Vector2[] positionRemappingTable) throws IOException {
-        position = positionRemappingTable[saveData.readInt()];
+    Explode(DataInputStream saveData, Deserializer deserializer) throws IOException {
+        position = deserializer.getObject(saveData.readInt());
         this.vX = saveData.readFloat();
         this.vY = saveData.readFloat();
         this.timeLeft = saveData.readFloat();
@@ -84,8 +85,9 @@ public class Explode implements CollisionHandler {
         position.setY(position.getY() + vY * frameTime);
     }
 
-    public void save(DataOutputStream saveData, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
-        saveData.writeInt(positionRemappingTable.get(position));
+    @Override
+    public void save(DataOutputStream saveData, Serializer serializer) throws IOException {
+        saveData.writeInt(serializer.getId(position));
         saveData.writeFloat(vX);
         saveData.writeFloat(vY);
         saveData.writeFloat(timeLeft);

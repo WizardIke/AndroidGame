@@ -5,8 +5,7 @@ package wizardike.assignment3.faction;
  */
 public enum Faction {
     Necromancer((byte)1),
-    Mage((byte)0),
-    Unaligned((byte)2);
+    Mage((byte)0);
     public final byte value;
 
     Faction(final byte faction){
@@ -23,15 +22,14 @@ public enum Faction {
                 other.value == Mage.value && this.value == Necromancer.value);
     }
 
-    public static Faction toFaction(final int faction) throws InvalidFactionException {
+    public static Faction toFaction(final int faction) {
         switch(faction){
             case 0 :
                 return Faction.Mage;
             case 1:
                 return Faction.Necromancer;
-            case 2:
-                return Faction.Unaligned;
+            default:
+                return null;
         }
-        throw new InvalidFactionException();
     }
 }

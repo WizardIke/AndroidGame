@@ -3,12 +3,10 @@ package wizardike.assignment3.health;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.levels.Level;
 
 public class HealthSystem {
@@ -18,19 +16,18 @@ public class HealthSystem {
         healthComponentStorage = new ComponentStorage<>(Health.class);
     }
 
-    public HealthSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public HealthSystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int healthComponentCount = save.readInt();
         Health[] healths = new Health[healthComponentCount];
         for(int i = 0; i != healthComponentCount; ++i) {
             final int id = save.readInt();
             healths[i] = HealthLoader.load(id, save);
+            deserializer.addObject(healths[i]);
         }
         int[] healthComponentEntities = new int[healthComponentCount];
         for(int i = 0; i != healthComponentCount; ++i) {
             final int oldEntity = save.readInt();
-            healthComponentEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            healthComponentEntities[i] = deserializer.getEntity(oldEntity);
         }
         healthComponentStorage = new ComponentStorage<>(Health.class, healthComponentEntities, healths);
     }
@@ -47,7 +44,7 @@ public class HealthSystem {
         healthComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final Health[] healths = healthComponentStorage.getAllComponents();
         final int healthComponentCount = healthComponentStorage.size();
         save.writeInt(healthComponentCount);
@@ -55,6 +52,7 @@ public class HealthSystem {
             Health health = healths[i];
             save.writeInt(health.getId());
             health.save(save);
+            serializer.addObject(health);
         }
 
         int[] entities = healthComponentStorage.getAllEntities();
@@ -76,9 +74,5 @@ public class HealthSystem {
 
     public Health[] getHealths() {
         return healthComponentStorage.getAllComponents();
-    }
-
-    public IdentityHashMap<Health, Integer> getHealthRemappingTable() {
-        return healthComponentStorage.getRemappingTable();
     }
 }

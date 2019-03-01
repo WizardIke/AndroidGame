@@ -3,9 +3,11 @@ package wizardike.assignment3.levels;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
 import wizardike.assignment3.Engine;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
+import wizardike.assignment3.ai.BasicAIControllerHostSystem;
 import wizardike.assignment3.ai.BasicAIControllerSystem;
 import wizardike.assignment3.animation.FireBoltAnimationSystem;
 import wizardike.assignment3.animation.WalkingAnimationSystem;
@@ -13,27 +15,23 @@ import wizardike.assignment3.awesomeness.AwesomenessSystem;
 import wizardike.assignment3.category.CategorySystem;
 import wizardike.assignment3.destruction.DestructionSystem;
 import wizardike.assignment3.faction.FactionSystem;
-import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.graphics.Camera;
 import wizardike.assignment3.graphics.Sprite;
-import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
 import wizardike.assignment3.graphics.SpriteSheets.SpriteSheetSystem;
-import wizardike.assignment3.health.Health;
 import wizardike.assignment3.health.HealthSystem;
 import wizardike.assignment3.health.RegenerationHostSystem;
 import wizardike.assignment3.health.RegenerationSystem;
 import wizardike.assignment3.networking.NetworkConnection;
 import wizardike.assignment3.networking.Server;
 import wizardike.assignment3.networking.SystemIds;
-import wizardike.assignment3.physics.movement.Movement;
-import wizardike.assignment3.physics.movement.MovementHostSystem;
-import wizardike.assignment3.physics.movement.MovementSystem;
+import wizardike.assignment3.physics.velocity.VelocityHostSystem;
+import wizardike.assignment3.physics.velocity.VelocitySystem;
 import wizardike.assignment3.position.PositionSystem;
 import wizardike.assignment3.updating.UpdatingSystem;
-import wizardike.assignment3.entity.EntityUpdater;
 import wizardike.assignment3.graphics.GeometrySystem;
 import wizardike.assignment3.graphics.LightingSystem;
 import wizardike.assignment3.physics.Collision.CollisionSystem;
+import wizardike.assignment3.userInterface.UserInterfaceSystem;
 
 /**
  * A game level. All levels should be an instance of this.
@@ -48,6 +46,7 @@ public class Level {
 
     private DestructionSystem destructionSystem;
     private UpdatingSystem updatingSystem;
+    private UserInterfaceSystem userInterfaceSystem;
     private PositionSystem positionSystem;
     private CollisionSystem collisionSystem;
     private GeometrySystem geometrySystem;
@@ -55,16 +54,17 @@ public class Level {
     private AwesomenessSystem awesomenessSystem;
     private CategorySystem categorySystem;
     private FactionSystem factionSystem;
-    private BasicAIControllerSystem basicAIControllerSystem;
+    private BasicAIControllerSystem basicAIControllerSystem = null;
+    private BasicAIControllerHostSystem basicAIControllerHostSystem = null;
     private HealthSystem healthSystem;
     private RegenerationSystem regenerationSystem = null;
     private RegenerationHostSystem regenerationHostSystem = null;
-    private MovementSystem movementSystem = null;
-    private MovementHostSystem movementHostSystem = null;
-    private Camera camera;
+    private VelocitySystem velocitySystem = null;
+    private VelocityHostSystem velocityHostSystem = null;
     private SpriteSheetSystem spriteSheetSystem;
     private WalkingAnimationSystem walkingAnimationSystem;
     private FireBoltAnimationSystem fireBoltAnimationSystem;
+    private Camera camera;
 
     /**
      * Makes an empty level
@@ -76,6 +76,7 @@ public class Level {
 
         destructionSystem = new DestructionSystem();
         updatingSystem = new UpdatingSystem();
+        userInterfaceSystem = new UserInterfaceSystem(this);
         positionSystem = new PositionSystem();
         collisionSystem = new CollisionSystem();
         geometrySystem = new GeometrySystem();
@@ -83,14 +84,15 @@ public class Level {
         awesomenessSystem = new AwesomenessSystem();
         categorySystem = new CategorySystem();
         factionSystem = new FactionSystem();
-        basicAIControllerSystem = new BasicAIControllerSystem();
         healthSystem = new HealthSystem();
         if(host) {
+            basicAIControllerHostSystem = new BasicAIControllerHostSystem();
             regenerationHostSystem = new RegenerationHostSystem();
-            movementHostSystem = new MovementHostSystem();
+            velocityHostSystem = new VelocityHostSystem();
         } else {
+            basicAIControllerSystem = new BasicAIControllerSystem();
             regenerationSystem = new RegenerationSystem();
-            movementSystem = new MovementSystem();
+            velocitySystem = new VelocitySystem();
         }
         camera = new Camera(null, 1.0f);
         spriteSheetSystem = new SpriteSheetSystem();
@@ -106,55 +108,76 @@ public class Level {
         NetworkConnection connection = engine.getNetworkConnection();
         boolean host = connection != null && connection.getClass() == Server.class;
 
-        final EntityUpdater entityUpdater = new EntityUpdater();
+        final Deserializer deserializer = new Deserializer(engine.getEntityAllocator());
         destructionSystem = new DestructionSystem(); //There shouldn't have been any entities pending destruction when we saved.
-        positionSystem = new PositionSystem(save, engine, entityUpdater);
-        final Vector2[] positionRemappingTable = positionSystem.getPositions();;
-        collisionSystem = new CollisionSystem(save, engine, entityUpdater, positionRemappingTable);
-        geometrySystem = new GeometrySystem(save, engine, entityUpdater, positionRemappingTable);
-        lightingSystem = new LightingSystem(save, engine, entityUpdater, positionRemappingTable);
-        awesomenessSystem = new AwesomenessSystem(save, engine, entityUpdater);
-        categorySystem = new CategorySystem(save, engine, entityUpdater);
-        factionSystem = new FactionSystem(save, engine, entityUpdater);
-        basicAIControllerSystem = new BasicAIControllerSystem(save, engine, entityUpdater);
-        healthSystem = new HealthSystem(save, engine, entityUpdater);
-        final Health[] healthRemappingTable = healthSystem.getHealths();
+        positionSystem = new PositionSystem(save, deserializer);
+        collisionSystem = new CollisionSystem(save, deserializer);
+        geometrySystem = new GeometrySystem(save, deserializer);
+        lightingSystem = new LightingSystem(save, deserializer);
+        awesomenessSystem = new AwesomenessSystem(save, deserializer);
+        categorySystem = new CategorySystem(save, deserializer);
+        factionSystem = new FactionSystem(save, deserializer);
+        healthSystem = new HealthSystem(save, deserializer);
         if(host) {
-            regenerationHostSystem = new RegenerationHostSystem(save, engine, entityUpdater, healthRemappingTable);
-            movementHostSystem = new MovementHostSystem(save, engine, entityUpdater, positionRemappingTable);
+            regenerationHostSystem = new RegenerationHostSystem(save, deserializer);
+            velocityHostSystem = new VelocityHostSystem(save, deserializer);
+            basicAIControllerHostSystem = new BasicAIControllerHostSystem(save, deserializer);
         } else {
-            regenerationSystem = new RegenerationSystem(save, engine, entityUpdater, healthRemappingTable);
-            movementSystem = new MovementSystem(save, engine, entityUpdater, positionRemappingTable);
+            regenerationSystem = new RegenerationSystem(save, deserializer);
+            velocitySystem = new VelocitySystem(save, deserializer);
+            basicAIControllerSystem = new BasicAIControllerSystem(save, deserializer);
         }
-        camera = new Camera(save, positionRemappingTable);
+        camera = new Camera(save, deserializer);
         Sprite[][] spritesToRemap = new Sprite[2][];
         spritesToRemap[0] = geometrySystem.getSprites();
         spritesToRemap[1] = geometrySystem.getTransparentSprites();
         final int[] spritesToRemapLength = new int[2];
         spritesToRemapLength[0] = geometrySystem.getSpriteCount();
         spritesToRemapLength[1] = geometrySystem.getTransparentSpriteCount();
-        spriteSheetSystem = new SpriteSheetSystem(save, engine, entityUpdater, spritesToRemap,
+        spriteSheetSystem = new SpriteSheetSystem(save, engine, deserializer, spritesToRemap,
                 spritesToRemapLength, new SpriteSheetSystem.Callback() {
             @Override
             public void onLoadComplete(SpriteSheetSystem spriteSheetSystem) {
                 try {
-                    SpriteSheet[] spriteSheets = spriteSheetSystem.getSpriteSheets();
-                    walkingAnimationSystem = new WalkingAnimationSystem(save, engine, entityUpdater,
-                            spriteSheets,
-                            movementSystem.getMovements(),
-                            geometrySystem.getSprites());
-                    fireBoltAnimationSystem = new FireBoltAnimationSystem(save, engine, entityUpdater,
-                            spriteSheets,
-                            geometrySystem.getTransparentSprites());
+                    walkingAnimationSystem = new WalkingAnimationSystem(save, deserializer);
+                    fireBoltAnimationSystem = new FireBoltAnimationSystem(save, deserializer);
+                    updatingSystem = new UpdatingSystem(save, deserializer);
+                    userInterfaceSystem = new UserInterfaceSystem(save, Level.this, deserializer);
 
-                    updatingSystem = new UpdatingSystem(save, engine, entityUpdater, spriteSheets);
+                    callback.onLoadComplete(Level.this);
                 } catch (IOException e) {
                     engine.onError();
                 }
-
-                callback.onLoadComplete(Level.this);
             }
         });
+    }
+
+    public void save(DataOutputStream save) throws IOException {
+        final Serializer serializer = new Serializer();
+
+        positionSystem.save(save, serializer);
+        collisionSystem.save(save, serializer);
+        geometrySystem.save(save, serializer);
+        lightingSystem.save(save, serializer);
+        awesomenessSystem.save(save, serializer);
+        categorySystem.save(save, serializer);
+        factionSystem.save(save, serializer);
+        healthSystem.save(save, serializer);
+        if(regenerationHostSystem != null) {
+            regenerationHostSystem.save(save, serializer);
+            velocityHostSystem.save(save, serializer);
+            basicAIControllerHostSystem.save(save, serializer);
+        } else {
+            regenerationSystem.save(save, serializer);
+            velocitySystem.save(save, serializer);
+            basicAIControllerSystem.save(save, serializer);
+        }
+        camera.save(save, serializer);
+        spriteSheetSystem.save(save, serializer);
+        walkingAnimationSystem.save(save, serializer);
+        fireBoltAnimationSystem.save(save, serializer);
+        updatingSystem.save(save, serializer);
+        userInterfaceSystem.save(save, serializer);
     }
 
     public Engine getEngine() {
@@ -167,6 +190,10 @@ public class Level {
 
     public UpdatingSystem getUpdatingSystem() {
         return updatingSystem;
+    }
+
+    public UserInterfaceSystem getUserInterfaceSystem() {
+        return userInterfaceSystem;
     }
 
     public CollisionSystem getCollisionSystem() {
@@ -201,6 +228,10 @@ public class Level {
         return basicAIControllerSystem;
     }
 
+    public BasicAIControllerHostSystem getBasicAIControllerHostSystem() {
+        return basicAIControllerHostSystem;
+    }
+
     public HealthSystem getHealthSystem() {
         return healthSystem;
     }
@@ -213,12 +244,12 @@ public class Level {
         return regenerationHostSystem;
     }
 
-    public MovementSystem getMovementSystem() {
-        return movementSystem;
+    public VelocitySystem getVelocitySystem() {
+        return velocitySystem;
     }
 
-    public MovementHostSystem getMovementHostSystem() {
-        return movementHostSystem;
+    public VelocityHostSystem getVelocityHostSystem() {
+        return velocityHostSystem;
     }
 
     public Camera getCamera() {
@@ -237,18 +268,24 @@ public class Level {
         return fireBoltAnimationSystem;
     }
 
+    public void start() {
+        userInterfaceSystem.start(engine.getUserInterface());
+    }
+
     public void update() {
         if(regenerationHostSystem != null) {
             regenerationHostSystem.update(this);
+            basicAIControllerHostSystem.update(this);
         } else {
             regenerationSystem.update(this);
+            basicAIControllerSystem.update(this);
         }
-        basicAIControllerSystem.update(this);
+
         collisionSystem.update(this); //handle collisions between objects
-        if(movementHostSystem != null) {
-            movementHostSystem.update(this);
+        if(velocityHostSystem != null) {
+            velocityHostSystem.update(this);
         } else {
-            movementSystem.update(this);
+            velocitySystem.update(this);
         }
         walkingAnimationSystem.update(this);
         fireBoltAnimationSystem.update(this);
@@ -258,42 +295,8 @@ public class Level {
         destructionSystem.update(this);
     }
 
-    public void save(DataOutputStream save) throws IOException {
-        positionSystem.save(save);
-        IdentityHashMap<Vector2, Integer> positionRemappingTable
-                = positionSystem.getRemappingTable();
-        collisionSystem.save(save, positionRemappingTable);
-        geometrySystem.save(save, positionRemappingTable);
-        IdentityHashMap<Sprite, Integer> spriteRemappingTable
-                = geometrySystem.getSpriteRemappingTable();
-        lightingSystem.save(save, positionRemappingTable);
-        awesomenessSystem.save(save);
-        categorySystem.save(save);
-        factionSystem.save(save);
-        basicAIControllerSystem.save(save);
-        healthSystem.save(save);
-        final IdentityHashMap<Health, Integer> healthRemappingTable
-                = healthSystem.getHealthRemappingTable();
-        IdentityHashMap<Movement, Integer> movementRemappingTable;
-        if(regenerationHostSystem != null) {
-            regenerationHostSystem.save(save, healthRemappingTable);
-            movementHostSystem.save(save, positionRemappingTable);
-            movementRemappingTable = movementHostSystem.getRemappingTable();
-        } else {
-            regenerationSystem.save(save, healthRemappingTable);
-            movementSystem.save(save, positionRemappingTable);
-            movementRemappingTable = movementSystem.getRemappingTable();
-        }
-        camera.save(save, positionRemappingTable);
-        spriteSheetSystem.save(save);
-        final IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable
-                = spriteSheetSystem.getRemappingTable();
-        walkingAnimationSystem.save(save, spriteSheetRemappingTable, movementRemappingTable,
-                spriteRemappingTable);
-        final IdentityHashMap<Sprite, Integer> transparentSpriteRemappingTable
-                = geometrySystem.getTransparentSpriteRemappingTable();
-        fireBoltAnimationSystem.save(save, spriteSheetRemappingTable, transparentSpriteRemappingTable);
-        updatingSystem.save(save, spriteSheetRemappingTable);
+    public void stop() {
+        userInterfaceSystem.stop(engine.getUserInterface());
     }
 
     public void handleMessage(DataInputStream networkIn) throws IOException {
@@ -322,13 +325,17 @@ public class Level {
     public void destroyEntity(int entity) {
         if(regenerationHostSystem != null) {
             regenerationHostSystem.removeRegenerations(entity);
-            movementHostSystem.removeMovements(entity);
+            velocityHostSystem.removeMovements(entity);
+            basicAIControllerHostSystem.removeBasicAIControllers(entity);
         } else {
             regenerationSystem.removeRegenerations(entity);
-            movementSystem.removeMovements(entity);
+            velocitySystem.removeMovements(entity);
+            basicAIControllerSystem.removeBasicAIControllers(entity);
         }
-        updatingSystem.removeAll(entity);
-        collisionSystem.removeAll(entity);
+        updatingSystem.removeUpdatables(entity);
+        userInterfaceSystem.removeLeftAnalogStickListeners(entity);
+        userInterfaceSystem.removeRightAnalogStickListeners(entity);
+        collisionSystem.removeCollidables(entity);
         positionSystem.removePositions(entity);
         geometrySystem.removeSprites(entity);
         geometrySystem.removeTransparentSprites(entity);

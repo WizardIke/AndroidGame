@@ -3,14 +3,12 @@ package wizardike.assignment3.graphics;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.IntersectionTesting;
-import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
 
 public class LightingSystem {
@@ -24,19 +22,17 @@ public class LightingSystem {
         lineShadowCasterComponentStorage = new ComponentStorage<>(LineShadowCaster.class);
     }
 
-    public LightingSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
-                          Vector2[] positionRemappingTable) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public LightingSystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int pointLightCount = save.readInt();
         final PointLight[] pointLights = new PointLight[pointLightCount];
         for(int i = 0; i != pointLightCount; ++i) {
-            pointLights[i] = new PointLight(save, positionRemappingTable);
+            pointLights[i] = new PointLight(save, deserializer);
+            deserializer.addObject(pointLights[i]);
         }
         int[] pointLightEntities = new int[pointLightCount];
         for(int i = 0; i != pointLightCount; ++i) {
             final int oldEntity = save.readInt();
-            pointLightEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            pointLightEntities[i] = deserializer.getEntity(oldEntity);
         }
         pointLightComponentStorage = new ComponentStorage<>(PointLight.class, pointLightEntities, pointLights);
 
@@ -45,11 +41,12 @@ public class LightingSystem {
         final CircleShadowCaster[] circleShadowCasters = new CircleShadowCaster[circleShadowCasterCount];
         for(int i = 0; i != circleShadowCasterCount; ++i) {
             circleShadowCasters[i] = new CircleShadowCaster(save);
+            deserializer.addObject(circleShadowCasters[i]);
         }
         int[] circleShadowCasterEntities = new int[circleShadowCasterCount];
         for(int i = 0; i != circleShadowCasterCount; ++i) {
             final int oldEntity = save.readInt();
-            circleShadowCasterEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            circleShadowCasterEntities[i] = deserializer.getEntity(oldEntity);
         }
         circleShadowCasterComponentStorage = new ComponentStorage<>(CircleShadowCaster.class, circleShadowCasterEntities, circleShadowCasters);
 
@@ -58,11 +55,12 @@ public class LightingSystem {
         final LineShadowCaster[] lineShadowCasters = new LineShadowCaster[lineShadowCasterCount];
         for(int i = 0; i != lineShadowCasterCount; ++i) {
             lineShadowCasters[i] = new LineShadowCaster(save);
+            deserializer.addObject(lineShadowCasters[i]);
         }
         int[] lineShadowCasterEntities = new int[lineShadowCasterCount];
         for(int i = 0; i != lineShadowCasterCount; ++i) {
             final int oldEntity = save.readInt();
-            lineShadowCasterEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            lineShadowCasterEntities[i] = deserializer.getEntity(oldEntity);
         }
         lineShadowCasterComponentStorage = new ComponentStorage<>(LineShadowCaster.class, lineShadowCasterEntities, lineShadowCasters);
     }
@@ -128,12 +126,13 @@ public class LightingSystem {
         lineShadowCasterComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final PointLight[] pointLights = pointLightComponentStorage.getAllComponents();
         final int pointLightCount = pointLightComponentStorage.size();
         save.writeInt(pointLightCount);
         for(int i = 0; i != pointLightCount; ++i) {
-            pointLights[i].save(save, positionRemappingTable);
+            pointLights[i].save(save, serializer);
+            serializer.addObject(pointLights[i]);
         }
         final int[] pointLightEntities = pointLightComponentStorage.getAllEntities();
         for (int i = 0; i != pointLightCount; ++i) {
@@ -145,6 +144,7 @@ public class LightingSystem {
         save.writeInt(circleShadowCasterCount);
         for(int i = 0; i != circleShadowCasterCount; ++i) {
             circleShadowCasters[i].save(save);
+            serializer.addObject(circleShadowCasters[i]);
         }
         int[] circleShadowCasterEntities = circleShadowCasterComponentStorage.getAllEntities();
         for (int i = 0; i != circleShadowCasterCount; ++i) {
@@ -156,6 +156,7 @@ public class LightingSystem {
         save.writeInt(lineShadowCasterCount);
         for(int i = 0; i != lineShadowCasterCount; ++i) {
             lineShadowCasters[i].save(save);
+            serializer.addObject(lineShadowCasters[i]);
         }
         int[] lineShadowCasterEntities = lineShadowCasterComponentStorage.getAllEntities();
         for (int i = 0; i != lineShadowCasterCount; ++i) {

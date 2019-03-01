@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.category.Category;
 import wizardike.assignment3.faction.Faction;
 import wizardike.assignment3.geometry.Vector2;
@@ -26,7 +28,7 @@ public class Bite implements CollisionHandler {
     static void registerLoader() {
         CollisionHandlerLoader.addLoader(id, new CollisionHandlerLoader.Loader() {
             @Override
-            public CollisionHandler load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
+            public CollisionHandler load(DataInputStream save, Deserializer deserializer) throws IOException {
                 return new Bite(save);
             }
         });
@@ -38,7 +40,7 @@ public class Bite implements CollisionHandler {
         this.damage = damage;
     }
 
-    public Bite(DataInputStream saveData) throws IOException {
+    private Bite(DataInputStream saveData) throws IOException {
         castTime = saveData.readFloat();
         coolDown = saveData.readFloat();
         damage = saveData.readFloat();
@@ -69,7 +71,7 @@ public class Bite implements CollisionHandler {
     }
 
     @Override
-    public void save(DataOutputStream saveData, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
+    public void save(DataOutputStream saveData, Serializer serializer) throws IOException {
         saveData.writeFloat(castTime);
         saveData.writeFloat(coolDown);
         saveData.writeFloat(damage);

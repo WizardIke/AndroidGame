@@ -157,7 +157,7 @@ public class GeometryBuffer implements Closeable {
     }
 
     @TargetApi(18)
-    public void prepareToGenerateMeshes30(final int currentBufferIndex) {
+    void prepareToGenerateMeshes30(final int currentBufferIndex) {
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, spriteBufferHandles[currentBufferIndex]);
         final int flags = GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_FLUSH_EXPLICIT_BIT
                 | GLES30.GL_MAP_UNSYNCHRONIZED_BIT;
@@ -166,11 +166,11 @@ public class GeometryBuffer implements Closeable {
         spriteBuffer = ((ByteBuffer)buffer).asFloatBuffer();
     }
 
-    public int getCurrentMeshOffset() {
+    int getCurrentMeshOffset() {
         return spriteBuffer.position() * 4;
     }
 
-    public void drawSprite30(Sprite sprite) {
+    void drawSprite30(Sprite sprite) {
         spriteBuffer.put(sprite.position.getX() + sprite.offsetX);
         spriteBuffer.put(sprite.position.getY() + sprite.offsetY);
         spriteBuffer.put(sprite.width);
@@ -182,19 +182,19 @@ public class GeometryBuffer implements Closeable {
     }
 
     @TargetApi(18)
-    public void finishGeneratingMeshes30(int offsetInBytes, int numberOfSprites) {
+    void finishGeneratingMeshes30(int offsetInBytes, int numberOfSprites) {
         GLES30.glFlushMappedBufferRange(GLES30.GL_ARRAY_BUFFER, offsetInBytes,
                 numberOfSprites * SPRITE_SIZE_IN_BYTES30);
         GLES30.glUnmapBuffer(GLES30.GL_ARRAY_BUFFER);
     }
 
-    public void prepareToRenderMeshes(int textureHandle) {
+    void prepareToRenderMeshes(int textureHandle) {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
     }
 
     @TargetApi(18)
-    public void prepareToRenderOpaqueSpritesUsingDepthTexture30(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderOpaqueSpritesUsingDepthTexture30(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
@@ -213,14 +213,14 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDepthFunc(GLES20.GL_GEQUAL);
     }
 
-    public void finishRenderingOpaqueSpritesUsingDepthTexture30() {
+    void finishRenderingOpaqueSpritesUsingDepthTexture30() {
         GLES30.glDisableVertexAttribArray(opaqueSpritePositionHandle);
         GLES30.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
         GLES30.glDepthMask(false);
     }
 
     @TargetApi(18)
-    public void prepareToRenderOpaqueSpritesDepthOnly30(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderOpaqueSpritesDepthOnly30(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, depthPassFrameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
@@ -239,13 +239,13 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDepthFunc(GLES20.GL_GEQUAL);
     }
 
-    public void finishRenderingOpaqueSpritesDepthOnly30() {
+    void finishRenderingOpaqueSpritesDepthOnly30() {
         GLES30.glDisableVertexAttribArray(spriteDepthPositionHandle);
         GLES30.glDisableVertexAttribArray(spriteDepthTexCoordinatesHandle);
     }
 
     @TargetApi(18)
-    public void prepareToRenderOpaqueSpritesColorOnly30(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderOpaqueSpritesColorOnly30(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
@@ -260,18 +260,18 @@ public class GeometryBuffer implements Closeable {
         GLES30.glVertexAttribDivisor(opaqueSpriteTexCoordinatesHandle, 1);
     }
 
-    public void finishRenderingOpaqueSpritesColorOnly30() {
+    void finishRenderingOpaqueSpritesColorOnly30() {
         GLES30.glDisableVertexAttribArray(opaqueSpritePositionHandle);
         GLES30.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
     }
 
     @TargetApi(18)
-    public void renderOpaqueSpritesMesh30(int offsetInBytes, int spriteCount) {
+    void renderOpaqueSpritesMesh30(int offsetInBytes, int spriteCount) {
         renderSprites30(offsetInBytes, spriteCount, opaqueSpritePositionHandle, opaqueSpriteTexCoordinatesHandle);
     }
 
     @TargetApi(18)
-    public void prepareToRenderTransparentSprites30(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderTransparentSprites30(Camera camera, GraphicsManager graphicsManager) {
         GLES30.glUseProgram(transparentSpriteProgram);
         //set camera constants on gpu
         GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle,
@@ -287,11 +287,11 @@ public class GeometryBuffer implements Closeable {
         GLES30.glEnable(GLES30.GL_BLEND);
     }
 
-    public void renderTransparentSpritesMesh30(int offsetInBytes, int spriteCount) {
+    void renderTransparentSpritesMesh30(int offsetInBytes, int spriteCount) {
         renderSprites30(offsetInBytes, spriteCount, transparentSpritePositionHandle, transparentSpriteTexCoordinatesHandle);
     }
 
-    public void finishRenderingTransparentSprites30() {
+    void finishRenderingTransparentSprites30() {
         GLES30.glDisableVertexAttribArray(transparentSpritePositionHandle);
         GLES30.glDisableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
     }
@@ -309,12 +309,12 @@ public class GeometryBuffer implements Closeable {
         GLES30.glDrawArraysInstanced(GLES30.GL_TRIANGLE_STRIP, 0, 4, spriteCount);
     }
 
-    public int getColorTextureHandle() {
+    int getColorTextureHandle() {
         return colorTextureHandle;
     }
 
 
-    public void drawSprite20(Sprite sprite) {
+    void drawSprite20(Sprite sprite) {
         float x = sprite.position.getX() + sprite.offsetX;
         float y = sprite.position.getY() + sprite.offsetY;
         spriteBuffer.put(x);
@@ -355,7 +355,7 @@ public class GeometryBuffer implements Closeable {
         spriteBuffer.put(sprite.texV + sprite.texHeight);
     }
 
-    public void prepareToRenderOpaqueSpritesUsingDepthTexture20(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderOpaqueSpritesUsingDepthTexture20(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
@@ -373,17 +373,17 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDisable(GLES20.GL_BLEND);
     }
 
-    public void renderOpaqueSpritesMesh20(int offsetInBytes, int spriteCount) {
+    void renderOpaqueSpritesMesh20(int offsetInBytes, int spriteCount) {
         renderSprites20(offsetInBytes, spriteCount, opaqueSpritePositionHandle, opaqueSpriteTexCoordinatesHandle);
     }
 
-    public void finishRenderingOpaqueSpritesUsingDepthTexture20() {
+    void finishRenderingOpaqueSpritesUsingDepthTexture20() {
         GLES20.glDisableVertexAttribArray(opaqueSpritePositionHandle);
         GLES20.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
         GLES20.glDepthMask(false);
     }
 
-    public void prepareToRenderOpaqueSpritesDepthOnly20(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderOpaqueSpritesDepthOnly20(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, depthPassFrameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
@@ -400,12 +400,12 @@ public class GeometryBuffer implements Closeable {
         GLES20.glDepthFunc(GLES20.GL_GEQUAL);
     }
 
-    public void finishRenderingOpaqueSpritesDepthOnly20() {
+    void finishRenderingOpaqueSpritesDepthOnly20() {
         GLES20.glDisableVertexAttribArray(spriteDepthPositionHandle);
         GLES20.glDisableVertexAttribArray(spriteDepthTexCoordinatesHandle);
     }
 
-    public void prepareToRenderOpaqueSpritesColorOnly20(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderOpaqueSpritesColorOnly20(Camera camera, GraphicsManager graphicsManager) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBufferHandle);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
@@ -418,12 +418,12 @@ public class GeometryBuffer implements Closeable {
         GLES20.glEnableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
     }
 
-    public void finishRenderingOpaqueSpritesColorOnly20() {
+    void finishRenderingOpaqueSpritesColorOnly20() {
         GLES20.glDisableVertexAttribArray(opaqueSpritePositionHandle);
         GLES20.glDisableVertexAttribArray(opaqueSpriteTexCoordinatesHandle);
     }
 
-    public void prepareToRenderTransparentSprites20(Camera camera, GraphicsManager graphicsManager) {
+    void prepareToRenderTransparentSprites20(Camera camera, GraphicsManager graphicsManager) {
         GLES30.glUseProgram(transparentSpriteProgram);
         //set camera constants on gpu
         GLES20.glUniform4f(transparentSpriteCameraScaleAndOffsetHandle,
@@ -435,11 +435,11 @@ public class GeometryBuffer implements Closeable {
         GLES20.glEnable(GLES20.GL_BLEND);
     }
 
-    public void renderTransparentSpritesMesh20(int offsetInBytes, int spriteCount) {
+    void renderTransparentSpritesMesh20(int offsetInBytes, int spriteCount) {
         renderSprites20(offsetInBytes, spriteCount, transparentSpritePositionHandle, transparentSpriteTexCoordinatesHandle);
     }
 
-    public void finishRenderingTransparentSprites20() {
+    void finishRenderingTransparentSprites20() {
         GLES20.glDisableVertexAttribArray(transparentSpritePositionHandle);
         GLES20.glDisableVertexAttribArray(transparentSpriteTexCoordinatesHandle);
     }
@@ -459,7 +459,7 @@ public class GeometryBuffer implements Closeable {
         spriteBuffer.position(oldPosition);
     }
 
-    public void setSize(int width, int height) {
+    void setSize(int width, int height) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, colorTextureHandle);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB5_A1, width, height, 0,
                 GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);

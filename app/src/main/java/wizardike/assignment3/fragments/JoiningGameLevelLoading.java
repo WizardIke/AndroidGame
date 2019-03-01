@@ -86,7 +86,7 @@ public class JoiningGameLevelLoading implements GameLevel {
             try {
                 clientSocket.connect(new InetSocketAddress(ipBox.text, 12000), 1000);
                 main.networkConnection = new ClientConnection(clientSocket);
-                main.player = new FireMageClient(main, saveData);
+                main.player = new FireMageClientPlayer(main, saveData);
                 main.continueLoading(saveData, gameObjectCount);
             } catch (IOException e) {
                 ipNotFound = true;

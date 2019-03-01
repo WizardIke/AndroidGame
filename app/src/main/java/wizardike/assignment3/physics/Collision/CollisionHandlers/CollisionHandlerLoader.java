@@ -5,11 +5,12 @@ import android.util.SparseArray;
 import java.io.DataInputStream;
 import java.io.IOException;
 
+import wizardike.assignment3.Serialization.Deserializer;
 import wizardike.assignment3.geometry.Vector2;
 
 public class CollisionHandlerLoader {
     interface Loader {
-        CollisionHandler load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException;
+        CollisionHandler load(DataInputStream save, Deserializer deserializer) throws IOException;
     }
     private static final SparseArray<Loader> loaders = new SparseArray<>();
 
@@ -25,7 +26,7 @@ public class CollisionHandlerLoader {
         ExplodeClient.registerLoader();
     }
 
-    public static CollisionHandler load(int id, DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-        return loaders.get(id).load(save, positionRemappingTable);
+    public static CollisionHandler load(int id, DataInputStream save, Deserializer deserializer) throws IOException {
+        return loaders.get(id).load(save, deserializer);
     }
 }

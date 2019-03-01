@@ -112,7 +112,7 @@ public class ComponentStorage<E> {
         Arrays.sort(indices);
         int shift = 0;
         for(int i = 0; i != size; ++i) {
-            if(indices[shift] == i) {
+            if(shift != indices.length && indices[shift] == i) {
                 ++shift;
             } else {
                 moveComponent(i, i - shift);
@@ -122,17 +122,23 @@ public class ComponentStorage<E> {
         size -= indices.length;
     }
 
+    /**
+     * Removes the component in this ComponentStorage from an entity.
+     * Can be called even if the entity doesn't have this component.
+     * @param entity The entity to remove the component from
+     */
     public void removeComponent(int entity, E component) {
         int[] indices = lookup.get(entity);
+        if(indices == null) return;
         int i = 0;
-        while(true) {
+        for(;; ++i) {
+            if(i == indices.length) return;
             final int index = indices[i];
             if(components[index] == component) {
                 moveLastComponent(index);
                 --size;
                 break;
             }
-            ++i;
         }
         final int newLength = indices.length - 1;
         if(newLength != 0) {
@@ -272,6 +278,7 @@ public class ComponentStorage<E> {
 
     public int indexOf(int entity, E component) {
         int[] indices = lookup.get(entity);
+        if(indices == null) return -1;
         for(int index : indices) {
             if(components[index] == component) {
                 return index;

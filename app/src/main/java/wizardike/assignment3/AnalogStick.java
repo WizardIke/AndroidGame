@@ -6,6 +6,8 @@ import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
+import java.util.ArrayList;
+
 public class AnalogStick extends AppCompatImageView {
     public interface OnRotationListener {
         void start(float directionX, float directionY);
@@ -13,7 +15,7 @@ public class AnalogStick extends AppCompatImageView {
         void stop(float directionX, float directionY);
     }
 
-    private OnRotationListener listener = null;
+    private ArrayList<OnRotationListener> listeners;
     private boolean validTouch;
     private float imageAngleInDegrees;
     private float previousAngleInDegrees;
@@ -39,8 +41,8 @@ public class AnalogStick extends AppCompatImageView {
         validTouch = false;
     }
 
-    public void setOnRotationListener(OnRotationListener listener) {
-        this.listener = listener;
+    public void setOnRotationListeners(ArrayList<OnRotationListener> listeners) {
+        this.listeners = listeners;
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -66,7 +68,7 @@ public class AnalogStick extends AppCompatImageView {
                 if(distanceSquared <= halfWidth * halfWidth) {
                     previousAngleInDegrees = angle;
                     validTouch = true;
-                    if(listener != null) {
+                    for(OnRotationListener listener : listeners) {
                         listener.start(directionX, directionY);
                     }
                 } else {
@@ -79,7 +81,7 @@ public class AnalogStick extends AppCompatImageView {
                     float angleChange = angle - previousAngleInDegrees;
                     imageAngleInDegrees += angleChange;
                     setRotation(imageAngleInDegrees);
-                    if(listener != null) {
+                    for(OnRotationListener listener : listeners) {
                         listener.move(directionX, directionY);
                     }
                 }
@@ -90,7 +92,7 @@ public class AnalogStick extends AppCompatImageView {
                     float angleChange = angle - previousAngleInDegrees;
                     imageAngleInDegrees += angleChange;
                     setRotation(imageAngleInDegrees);
-                    if(listener != null) {
+                    for(OnRotationListener listener : listeners) {
                         listener.stop(directionX, directionY);
                     }
                 }

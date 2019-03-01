@@ -3,8 +3,9 @@ package wizardike.assignment3.physics.Collision;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.Circle;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
@@ -17,8 +18,8 @@ public class CircleHitBox extends Circle implements Collidable {
     static void registerLoader() {
         CollidableLoader.addLoader(id, new CollidableLoader.Loader() {
             @Override
-            public Collidable load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-                return new CircleHitBox(save, positionRemappingTable);
+            public Collidable load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new CircleHitBox(save, deserializer);
             }
         });
     }
@@ -28,8 +29,8 @@ public class CircleHitBox extends Circle implements Collidable {
         mMass = mass;
     }
 
-    private CircleHitBox(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-        super(positionRemappingTable[save.readInt()], save.readFloat());
+    private CircleHitBox(DataInputStream save, Deserializer deserializer) throws IOException {
+        super((Vector2)deserializer.getObject(save.readInt()), save.readFloat());
         mMass = save.readFloat();
     }
 
@@ -54,8 +55,8 @@ public class CircleHitBox extends Circle implements Collidable {
     }
 
     @Override
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
-        save.writeInt(positionRemappingTable.get(getPosition()));
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
+        save.writeInt(serializer.getId(getPosition()));
         save.writeFloat(getRadius());
         save.writeFloat(mMass);
     }

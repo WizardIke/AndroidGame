@@ -63,7 +63,6 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
 
     private static final float MIN_VIEW_PORT_LENGTH_IN_METERS = 7.0f;
 
-    private Engine engine;
     private WorldUpdatingSystem worldUpdatingSystem = new WorldUpdatingSystem();
     private GeometryBuffer geometryBuffer;
     private LightBuffer lightBuffer;
@@ -95,7 +94,6 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
     }
 
     public void setEngine(Engine engine) {
-        this.engine = engine;
         textureManager = new TextureManager(engine);
     }
 
@@ -179,10 +177,10 @@ public class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Rend
     public void onDrawFrame(GL10 unused) {
         if(openGLVersion >= 30 && Build.VERSION.SDK_INT >= 18) {
             startRendering30();
-            worldUpdatingSystem.update(engine);
+            worldUpdatingSystem.update();
             endRendering30();
         } else {
-            worldUpdatingSystem.update(engine);
+            worldUpdatingSystem.update();
         }
     }
 

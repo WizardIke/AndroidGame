@@ -3,11 +3,11 @@ package wizardike.assignment3.physics.Collision.CollisionHandlers;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.category.Category;
 import wizardike.assignment3.faction.Faction;
-import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.physics.Collision.Collidable;
 
@@ -20,7 +20,7 @@ public class BiteClient implements CollisionHandler {
     static void registerLoader() {
         CollisionHandlerLoader.addLoader(id, new CollisionHandlerLoader.Loader() {
             @Override
-            public CollisionHandler load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
+            public CollisionHandler load(DataInputStream save, Deserializer deserializer) throws IOException {
                 return new BiteClient(save);
             }
         });
@@ -34,7 +34,7 @@ public class BiteClient implements CollisionHandler {
         this.coolDown = 0f;
     }
 
-    public BiteClient(DataInputStream saveData) throws IOException {
+    private BiteClient(DataInputStream saveData) throws IOException {
         castTime = saveData.readFloat();
         coolDown = saveData.readFloat();
     }
@@ -59,7 +59,7 @@ public class BiteClient implements CollisionHandler {
     }
 
     @Override
-    public void save(DataOutputStream saveData, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
+    public void save(DataOutputStream saveData, Serializer serializer) throws IOException {
         saveData.writeFloat(castTime);
         saveData.writeFloat(coolDown);
     }

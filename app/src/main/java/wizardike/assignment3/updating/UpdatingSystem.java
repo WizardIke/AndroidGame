@@ -3,13 +3,10 @@ package wizardike.assignment3.updating;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
-import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.levels.Level;
 
 public class UpdatingSystem {
@@ -19,20 +16,18 @@ public class UpdatingSystem {
         updatableComponentStorage = new ComponentStorage<>(Updatable.class);
     }
 
-    public UpdatingSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
-                          SpriteSheet[] spriteSheetRemappingTable) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public UpdatingSystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int updatableCount = save.readInt();
         final Updatable[] updatables = new Updatable[updatableCount];
         for(int i = 0; i != updatableCount; ++i) {
             final int id = save.readInt();
-            updatables[i] = UpdatableLoader.load(id, save, spriteSheetRemappingTable);
+            updatables[i] = UpdatableLoader.load(id, save, deserializer);
+            deserializer.addObject(updatables[i]);
         }
         int[] updatableEntities = new int[updatableCount];
         for(int i = 0; i != updatableCount; ++i) {
             final int oldEntity = save.readInt();
-            updatableEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            updatableEntities[i] = deserializer.getEntity(oldEntity);
         }
         updatableComponentStorage = new ComponentStorage<>(Updatable.class, updatableEntities, updatables);
     }
@@ -46,14 +41,15 @@ public class UpdatingSystem {
         }
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final Updatable[] updatables = updatableComponentStorage.getAllComponents();
         final int updatableCount = updatableComponentStorage.size();
         save.writeInt(updatableCount);
         for(int i = 0; i != updatableCount; ++i) {
             Updatable updatable = updatables[i];
             save.writeInt(updatable.getId());
-            updatable.save(save, spriteSheetRemappingTable);
+            updatable.save(save, serializer);
+            serializer.addObject(updatable);
         }
 
         int[] entities = updatableComponentStorage.getAllEntities();
@@ -66,7 +62,7 @@ public class UpdatingSystem {
         updatableComponentStorage.addComponent(entity, updatable);
     }
 
-    public void removeAll(int entity) {
+    public void removeUpdatables(int entity) {
         updatableComponentStorage.removeComponents(entity);
     }
 

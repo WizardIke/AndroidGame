@@ -13,20 +13,19 @@ import wizardike.assignment3.health.Regeneration;
 import wizardike.assignment3.health.Resistances;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.physics.Collision.CircleHitBox;
-import wizardike.assignment3.physics.movement.Movement;
 
 /**
  * Created by Isaac on 24/01/2017.
  */
 public class FireMageNPC {
-    private static final float startingSpeed = 0.2f * 6.0f;
-    private static final float startingMaxHealth = 100f;
+    private static final float startingSpeed = 1.5f;
     private static final float radius = 0.02f * 6.0f;
     private static final float mass = 70.0f;
-
+    private static final float startingMaxHealth = 100f;
     private final static float armorToughness = 0.1f;
     private static final float startingHealthRegen = 0.9f;
     private static final float startingResistance = 1.0f;
+    private static final float walkingAnimationLength = 0.4f;
 
     public static int create(Level level, final float posX, final float posY, WalkingSpriteSheet spriteSheet) {
         int entity = level.getEngine().getEntityAllocator().allocate();
@@ -36,9 +35,7 @@ public class FireMageNPC {
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addSprite(entity, sprite);
         level.getLightingSystem().addPointLight(entity, new PointLight(position, 0.0f, 0.0f, 1.5f, radius, 0.8f, 0.7f, 0.7f));
-        final Movement movement = new Movement(position);
-        level.getMovementSystem().addMovement(entity, movement);
-        WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, 0.4f);
+        WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, sprite, walkingAnimationLength);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
         level.getCollisionSystem().addCollidable(entity, circleHitBox);
@@ -49,8 +46,8 @@ public class FireMageNPC {
                 startingResistance, startingResistance), armorToughness, startingMaxHealth, startingMaxHealth);
         level.getHealthSystem().addHealth(entity, health);
         level.getRegenerationSystem().addRegeneration(entity, new Regeneration(startingHealthRegen, health));
-        //TODO addCollidable spells
-        //TODO addCollidable movement controller component
+        //TODO add spells
+        //TODO add velocity ai controller component
         return entity;
     }
 }

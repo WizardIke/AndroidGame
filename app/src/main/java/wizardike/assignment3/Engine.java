@@ -16,8 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.fragments.UserInterface;
+import wizardike.assignment3.userInterface.UserInterface;
 import wizardike.assignment3.graphics.GraphicsManager;
 import wizardike.assignment3.networking.NetworkConnection;
 import wizardike.assignment3.worlds.FrameTimer;
@@ -26,7 +25,7 @@ import wizardike.assignment3.worlds.World;
 import wizardike.assignment3.worlds.WorldLoader;
 
 public class Engine {
-    private static final int MAX_AUDIO_STREAMS = 16;
+    private static final int maxAudioStreams = 16;
 
     private PlayGameRequest playGameRequest;
     private GraphicsManager graphicsManager;
@@ -44,7 +43,7 @@ public class Engine {
     public Engine(Activity context, PlayGameRequest playGameRequest, GraphicsManager graphicsManager) {
         this.graphicsManager = graphicsManager;
         graphicsManager.setEngine(this);
-        audioManager = new AudioManager(context, MAX_AUDIO_STREAMS);
+        audioManager = new AudioManager(context, maxAudioStreams);
         backgroundWorkManager = new ThreadPoolExecutor(
                 Runtime.getRuntime().availableProcessors(),
                 Runtime.getRuntime().availableProcessors(),
@@ -83,9 +82,7 @@ public class Engine {
                                     graphicsManager.queueEvent(new Runnable() {
                                         @Override
                                         public void run() {
-                                            frameTimer.start();
                                             graphicsManager.addWorld(frameTimer);
-
                                             graphicsManager.addWorld(Engine.this.mainWorld);
                                             loadingFinished();
                                         }

@@ -3,14 +3,10 @@ package wizardike.assignment3.health;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
 
 import wizardike.assignment3.ComponentStorage;
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.levels.Level;
 
 public class RegenerationSystem {
@@ -20,20 +16,17 @@ public class RegenerationSystem {
         regenerationComponentStorage = new ComponentStorage<>(Regeneration.class);
     }
 
-    public RegenerationSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
-                              final Health[] remappingTable)
-            throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public RegenerationSystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int regenerationCount = save.readInt();
         Regeneration[] regenerations = new Regeneration[regenerationCount];
         for(int i = 0; i != regenerationCount; ++i) {
-            regenerations[i] = new Regeneration(save, remappingTable);
+            regenerations[i] = new Regeneration(save, deserializer);
+            deserializer.addObject(regenerations[i]);
         }
         int[] regenerationEntities = new int[regenerationCount];
         for(int i = 0; i != regenerationCount; ++i) {
             final int oldEntity = save.readInt();
-            regenerationEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            regenerationEntities[i] = deserializer.getEntity(oldEntity);
         }
         regenerationComponentStorage = new ComponentStorage<>(Regeneration.class,
                 regenerationEntities, regenerations);
@@ -51,12 +44,13 @@ public class RegenerationSystem {
         regenerationComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save, final IdentityHashMap<Health, Integer> remappingTable) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final Regeneration[] regenerations = regenerationComponentStorage.getAllComponents();
         final int regenerationCount = regenerationComponentStorage.size();
         save.writeInt(regenerationCount);
         for(int i = 0; i != regenerationCount; ++i) {
-            regenerations[i].save(save, remappingTable);
+            regenerations[i].save(save, serializer);
+            serializer.addObject(regenerations[i]);
         }
 
         int[] entities = regenerationComponentStorage.getAllEntities();

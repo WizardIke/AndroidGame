@@ -3,8 +3,9 @@ package wizardike.assignment3.graphics;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.Vector2;
 
 public class PointLight {
@@ -29,8 +30,8 @@ public class PointLight {
         this.colorB = colorB;
     }
 
-    public PointLight(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-        position = positionRemappingTable[save.readInt()];
+    public PointLight(DataInputStream save, Deserializer deserializer) throws IOException {
+        position = deserializer.getObject(save.readInt());
         this.offsetX = save.readFloat();
         this.offsetY = save.readFloat();
         this.positionZ = save.readFloat();
@@ -40,8 +41,8 @@ public class PointLight {
         this.colorB = save.readFloat();
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
-        save.writeInt(positionRemappingTable.get(position));
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
+        save.writeInt(serializer.getId(position));
         save.writeFloat(offsetX);
         save.writeFloat(offsetY);
         save.writeFloat(positionZ);

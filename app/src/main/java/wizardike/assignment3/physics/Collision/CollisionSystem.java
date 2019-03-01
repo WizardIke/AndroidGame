@@ -3,12 +3,10 @@ package wizardike.assignment3.physics.Collision;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.AlignedRectangle;
 import wizardike.assignment3.geometry.Circle;
 import wizardike.assignment3.geometry.Vector2;
@@ -23,20 +21,18 @@ public class CollisionSystem {
         collidableComponentStorage = new ComponentStorage<>(Collidable.class);
     }
 
-    public CollisionSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
-                           Vector2[] positionRemappingTable) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public CollisionSystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int collidableCount = save.readInt();
         Collidable[] collidables = new Collidable[collidableCount];
         for(int i = 0; i != collidableCount; ++i) {
             final int id = save.readInt();
-            collidables[i] = CollidableLoader.load(id, save, positionRemappingTable);
+            collidables[i] = CollidableLoader.load(id, save, deserializer);
+            deserializer.addObject(collidables[i]);
         }
         int[] collidableEntities = new int[collidableCount];
         for(int i = 0; i != collidableCount; ++i) {
             final int oldEntity = save.readInt();
-            collidableEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            collidableEntities[i] = deserializer.getEntity(oldEntity);
         }
         collidableComponentStorage = new ComponentStorage<>(Collidable.class, collidableEntities, collidables);
     }
@@ -61,7 +57,7 @@ public class CollisionSystem {
         collidableComponentStorage.addComponent(entity, collidable);
     }
 
-    public void removeAll(int entity) {
+    public void removeCollidables(int entity) {
         collidableComponentStorage.removeComponents(entity);
     }
 
@@ -72,14 +68,15 @@ public class CollisionSystem {
         }
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final Collidable[] collidables = collidableComponentStorage.getAllComponents();
         final int collidableCount = collidableComponentStorage.size();
         save.writeInt(collidableCount);
         for(int i = 0; i != collidableCount; ++i) {
             Collidable collidable = collidables[i];
             save.writeInt(collidable.getId());
-            collidable.save(save, positionRemappingTable);
+            collidable.save(save, serializer);
+            serializer.addObject(collidable);
         }
 
         int[] entities = collidableComponentStorage.getAllEntities();

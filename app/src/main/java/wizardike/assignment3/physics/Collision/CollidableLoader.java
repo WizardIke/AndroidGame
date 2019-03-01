@@ -5,11 +5,12 @@ import android.util.SparseArray;
 import java.io.DataInputStream;
 import java.io.IOException;
 
+import wizardike.assignment3.Serialization.Deserializer;
 import wizardike.assignment3.geometry.Vector2;
 
 public class CollidableLoader {
     interface Loader {
-        Collidable load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException;
+        Collidable load(DataInputStream save, Deserializer deserializer) throws IOException;
     }
     private static final SparseArray<Loader> loaders = new SparseArray<>();
 
@@ -23,7 +24,7 @@ public class CollidableLoader {
         TriggeredCircleHitBox.registerLoader();
     }
 
-    public static Collidable load(int id, DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-        return loaders.get(id).load(save, positionRemappingTable);
+    public static Collidable load(int id, DataInputStream save, Deserializer deserializer) throws IOException {
+        return loaders.get(id).load(save, deserializer);
     }
 }

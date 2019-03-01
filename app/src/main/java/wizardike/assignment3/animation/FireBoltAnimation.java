@@ -3,10 +3,10 @@ package wizardike.assignment3.animation;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.graphics.Sprite;
-import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
 import wizardike.assignment3.graphics.SpriteSheets.WalkingSpriteSheet;
 
 public class FireBoltAnimation {
@@ -32,10 +32,9 @@ public class FireBoltAnimation {
         sprite.texHeight = spriteSheet.spriteTextureHeight;
     }
 
-    public FireBoltAnimation(DataInputStream save, SpriteSheet[] spriteSheetRemappingTable,
-                             Sprite[] spriteRemappingTable) throws IOException {
-        spriteSheet = (WalkingSpriteSheet)spriteSheetRemappingTable[save.readInt()];
-        sprite = spriteRemappingTable[save.readInt()];
+    public FireBoltAnimation(DataInputStream save, Deserializer deserializer) throws IOException {
+        spriteSheet = deserializer.getObject(save.readInt());
+        sprite = deserializer.getObject(save.readInt());
         animationTime = save.readFloat();
         state = save.readInt();
         offsetInCoordinates = save.readInt();
@@ -77,11 +76,9 @@ public class FireBoltAnimation {
         }
     }
 
-    public void save(DataOutputStream save,
-                     IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable,
-                     IdentityHashMap<Sprite, Integer> spriteRemappingTable) throws IOException {
-        save.writeInt(spriteSheetRemappingTable.get(spriteSheet));
-        save.writeInt(spriteRemappingTable.get(sprite));
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
+        save.writeInt(serializer.getId(spriteSheet));
+        save.writeInt(serializer.getId(sprite));
         save.writeFloat(animationTime);
         save.writeInt(state);
         save.writeInt(offsetInCoordinates);

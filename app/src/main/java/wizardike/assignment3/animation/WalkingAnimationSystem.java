@@ -3,16 +3,11 @@ package wizardike.assignment3.animation;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
-import wizardike.assignment3.graphics.Sprite;
-import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.levels.Level;
-import wizardike.assignment3.physics.movement.Movement;
 
 public class WalkingAnimationSystem {
     private final ComponentStorage<WalkingAnimation> walkingAnimationComponentStorage;
@@ -21,23 +16,18 @@ public class WalkingAnimationSystem {
         walkingAnimationComponentStorage = new ComponentStorage<>(WalkingAnimation.class);
     }
 
-    public WalkingAnimationSystem(DataInputStream save, Engine engine,
-                                  final EntityUpdater entityUpdater,
-                                  SpriteSheet[] spriteSheetRemappingTable,
-                                  Movement[] movementRemappingTable,
-                                  Sprite[] spriteRemappingTable) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
+    public WalkingAnimationSystem(DataInputStream save, Deserializer deserializer) throws IOException {
 
         final int walkingAnimationCount = save.readInt();
         WalkingAnimation[] walkingAnimations = new WalkingAnimation[walkingAnimationCount];
         for(int i = 0; i != walkingAnimationCount; ++i) {
-            walkingAnimations[i] = new WalkingAnimation(save, spriteSheetRemappingTable,
-                    movementRemappingTable, spriteRemappingTable);
+            walkingAnimations[i] = new WalkingAnimation(save, deserializer);
+            deserializer.addObject(walkingAnimations[i]);
         }
         int[] walkingAnimationEntities = new int[walkingAnimationCount];
         for(int i = 0; i != walkingAnimationCount; ++i) {
             final int oldEntity = save.readInt();
-            walkingAnimationEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            walkingAnimationEntities[i] = deserializer.getEntity(oldEntity);
         }
         walkingAnimationComponentStorage = new ComponentStorage<>(WalkingAnimation.class,
                 walkingAnimationEntities, walkingAnimations);
@@ -55,15 +45,13 @@ public class WalkingAnimationSystem {
         walkingAnimationComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable,
-                     IdentityHashMap<Movement, Integer> movementRemappingTable,
-                     IdentityHashMap<Sprite, Integer> spriteRemappingTable) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final WalkingAnimation[] walkingAnimations = walkingAnimationComponentStorage.getAllComponents();
         final int walkingAnimationCount = walkingAnimationComponentStorage.size();
         save.writeInt(walkingAnimationCount);
         for(int i = 0; i != walkingAnimationCount; ++i) {
-            walkingAnimations[i].save(save, spriteSheetRemappingTable, movementRemappingTable,
-                    spriteRemappingTable);
+            walkingAnimations[i].save(save, serializer);
+            serializer.addObject(walkingAnimations[i]);
         }
 
         final int[] entities = walkingAnimationComponentStorage.getAllEntities();

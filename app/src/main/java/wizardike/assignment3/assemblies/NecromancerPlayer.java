@@ -1,8 +1,5 @@
 package wizardike.assignment3.assemblies;
 
-import android.os.Handler;
-import android.os.Looper;
-
 import wizardike.assignment3.Engine;
 import wizardike.assignment3.R;
 import wizardike.assignment3.animation.WalkingAnimation;
@@ -22,17 +19,15 @@ import wizardike.assignment3.health.Regeneration;
 import wizardike.assignment3.health.Resistances;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.physics.Collision.CircleHitBox;
-import wizardike.assignment3.physics.movement.Movement;
-import wizardike.assignment3.ai.PlayerMovementController;
+import wizardike.assignment3.userInterface.PlayerMovementController;
 
 public class NecromancerPlayer {
-    private static final float radius = 0.02f * 6.0f;
+    private static final float radius = 0.12f;
     private static final float mass = 70.0f;
     private static final float startingSpeed = 1.5f;
     private static final float armorToughness = 0.1f;
     private static final float startingHealthRegen = 0.9f;
     private static final float startingMaxHealth = 100.0f;
-
     private static final float startingFireResistance = 0.2f;
     private static final float startingColdResistance = 0.2f;
     private static final float startingLightningResistance = 0.2f;
@@ -40,7 +35,6 @@ public class NecromancerPlayer {
     private static final float startingBludgeoningResistance = 0.2f;
     private static final float startingPiecingResistance = 0.2f;
     private static final float startingSlashingResistance = 0.2f;
-
     private static final float walkingAnimationLength = 0.4f;
 
     public static void create(final Engine engine, final Level level, final float posX, final float posY,
@@ -48,12 +42,12 @@ public class NecromancerPlayer {
         new NecromancerSpriteSheet(R.drawable.necromancer_sprites, engine, new SpriteSheetLoader.Callback() {
             @Override
             public void onLoadComplete(SpriteSheet spriteSheet) {
-                resourcesLoaded(engine, level, posX, posY, (WalkingSpriteSheet)spriteSheet, callback);
+                resourcesLoaded(level, posX, posY, (WalkingSpriteSheet)spriteSheet, callback);
             }
         });
     }
 
-    public static void resourcesLoaded(final Engine engine, final Level level, final float posX, final float posY,
+    private static void resourcesLoaded(final Level level, final float posX, final float posY,
                                       final WalkingSpriteSheet spriteSheet, final EntityLoadedCallback callback) {
         final int entity = level.getEngine().getEntityAllocator().allocate();
         level.getSpriteSheetSystem().addSpriteSheet(entity, spriteSheet);
@@ -64,9 +58,7 @@ public class NecromancerPlayer {
         level.getGeometrySystem().addSprite(entity, sprite);
         final PointLight light = new PointLight(position, 0.0f, 0.0f, 1.5f, radius, 0.6f, 0.7f, 0.8f);
         level.getLightingSystem().addPointLight(entity, light);
-        final Movement movement = new Movement(position);
-        level.getMovementSystem().addMovement(entity, movement);
-        final WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, walkingAnimationLength);
+        final WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, sprite, walkingAnimationLength);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
         final CircleHitBox circleHitBox = new CircleHitBox(position, radius, mass);
         level.getCollisionSystem().addCollidable(entity, circleHitBox);
@@ -80,15 +72,11 @@ public class NecromancerPlayer {
         level.getAwesomenessSystem().addAwesomeness(entity, new Awesomeness(0));
         level.getCamera().position = position;
 
-        final PlayerMovementController movementController = new PlayerMovementController(movement, startingSpeed);
-        new Handler(Looper.getMainLooper()).post(new Runnable() { //needs to run on ui thread
-            @Override
-            public void run() {
-                //TODO addCollidable spells
-                //TODO add attack
-                engine.getUserInterface().setLeftAnalogStickOnRotationListener(movementController);
-                callback.onLoadComplete(entity);
-            }
-        });
+        final PlayerMovementController movementController = new PlayerMovementController(position, startingSpeed);
+        level.getUserInterfaceSystem().addLeftAnalogStickListener(entity, movementController);
+        //TODO add attack
+        //level.getUserInterfaceSystem().addRightAnalogStickListener(entity, attackController);
+        //TODO add spells
+        callback.onLoadComplete(entity);
     }
 }

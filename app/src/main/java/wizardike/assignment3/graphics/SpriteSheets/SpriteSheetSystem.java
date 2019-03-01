@@ -4,13 +4,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.Vector4;
 import wizardike.assignment3.graphics.Sprite;
 
@@ -28,8 +27,8 @@ public class SpriteSheetSystem {
         spriteSheetComponentStorage = new ComponentStorage<>(SpriteSheet.class);
     }
 
-    public SpriteSheetSystem(final DataInputStream save, final Engine engine, final EntityUpdater entityUpdater,
-                             final Sprite[][] spritesToRemap, final int[] spritesToRemapLength, final Callback callback) throws IOException {
+    public SpriteSheetSystem(final DataInputStream save, final Engine engine, final Deserializer deserializer,
+                             final Sprite[][] spritesToRemap, final int[] spritesToRemapLengths, final Callback callback) throws IOException {
 
         final int spriteSheetCount = save.readInt();
         if(spriteSheetCount == 0) {
@@ -46,13 +45,13 @@ public class SpriteSheetSystem {
             @Override
             public void onLoadComplete(SpriteSheet spriteSheet) {
                 if(loadedCount.incrementAndGet() == spriteSheetCount) {
-                    remapSprites(remappingTable, spritesToRemap, spritesToRemapLength);
+                    remapSprites(remappingTable, spritesToRemap, spritesToRemapLengths);
 
-                    final EntityAllocator entityAllocator = engine.getEntityAllocator();
                     final int[] entities = new int[spriteSheetCount];
                     for(int i = 0; i != spriteSheetCount; ++i) {
                         try {
-                            entities[i] = entityUpdater.getEntity(save.readInt(), entityAllocator);
+                            entities[i] = deserializer.getEntity(save.readInt());
+                            deserializer.addObject(spriteSheets[i]);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -76,7 +75,7 @@ public class SpriteSheetSystem {
         spriteSheetComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         SpriteSheet[] spriteSheets = spriteSheetComponentStorage.getAllComponents();
         final int spriteSheetCount = spriteSheetComponentStorage.size();
         save.writeInt(spriteSheetCount);
@@ -84,6 +83,7 @@ public class SpriteSheetSystem {
             SpriteSheet spriteSheet = spriteSheets[i];
             save.writeInt(spriteSheet.getId());
             spriteSheet.save(save);
+            serializer.addObject(spriteSheet);
         }
         final int[] spriteSheetEntities = spriteSheetComponentStorage.getAllEntities();
         for (int i = 0; i != spriteSheetCount; ++i) {
@@ -112,9 +112,5 @@ public class SpriteSheetSystem {
 
     public SpriteSheet[] getSpriteSheets() {
         return spriteSheetComponentStorage.getAllComponents();
-    }
-
-    public IdentityHashMap<SpriteSheet, Integer> getRemappingTable() {
-        return spriteSheetComponentStorage.getRemappingTable();
     }
 }

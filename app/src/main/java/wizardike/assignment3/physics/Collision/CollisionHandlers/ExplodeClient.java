@@ -3,8 +3,9 @@ package wizardike.assignment3.physics.Collision.CollisionHandlers;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.animation.FireBoltAnimation;
 import wizardike.assignment3.faction.Faction;
 import wizardike.assignment3.geometry.Vector2;
@@ -19,8 +20,8 @@ public class ExplodeClient implements CollisionHandler {
     static void registerLoader() {
         CollisionHandlerLoader.addLoader(id, new CollisionHandlerLoader.Loader() {
             @Override
-            public CollisionHandler load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-                return new ExplodeClient(save, positionRemappingTable);
+            public CollisionHandler load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new ExplodeClient(save, deserializer);
             }
         });
     }
@@ -37,8 +38,8 @@ public class ExplodeClient implements CollisionHandler {
         this.vY = vY;
     }
 
-    public ExplodeClient(DataInputStream saveData, Vector2[] positionRemappingTable) throws IOException {
-        position = positionRemappingTable[saveData.readInt()];
+    private ExplodeClient(DataInputStream saveData, Deserializer deserializer) throws IOException {
+        position = deserializer.getObject(saveData.readInt());
         this.vX = saveData.readFloat();
         this.vY = saveData.readFloat();
     }
@@ -66,8 +67,9 @@ public class ExplodeClient implements CollisionHandler {
         position.setY(position.getY() + vY * frameTime);
     }
 
-    public void save(DataOutputStream saveData, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
-        saveData.writeInt(positionRemappingTable.get(position));
+    @Override
+    public void save(DataOutputStream saveData, Serializer serializer) throws IOException {
+        saveData.writeInt(serializer.getId(position));
         saveData.writeFloat(vX);
         saveData.writeFloat(vY);
     }

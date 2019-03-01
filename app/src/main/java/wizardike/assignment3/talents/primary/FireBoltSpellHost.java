@@ -1,5 +1,6 @@
 package wizardike.assignment3.talents.primary;
 
+import wizardike.assignment3.Serialization.Deserializer;
 import wizardike.assignment3.assemblies.FireBoltParticleHost;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
@@ -23,8 +24,8 @@ public class FireBoltSpellHost extends FireBoltSpell {
     static void registerLoader() {
         PrimaryTalentLoader.addLoader(id, new PrimaryTalentLoader.Loader() {
             @Override
-            public PrimaryTalent load(DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
-                return new FireBoltSpellHost(save, spriteSheetRemappingTable);
+            public PrimaryTalent load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new FireBoltSpellHost(save, deserializer);
             }
         });
     }
@@ -33,8 +34,8 @@ public class FireBoltSpellHost extends FireBoltSpell {
         super(speed, castTime, range, damage, spriteSheet);
     }
 
-    public FireBoltSpellHost(DataInputStream saveData, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
-        super(saveData, spriteSheetRemappingTable);
+    public FireBoltSpellHost(DataInputStream saveData, Deserializer deserializer) throws IOException {
+        super(saveData, deserializer);
     }
 
     @Override

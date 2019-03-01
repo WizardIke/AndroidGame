@@ -3,24 +3,28 @@ package wizardike.assignment3.animation;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.graphics.Sprite;
-import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
 import wizardike.assignment3.graphics.SpriteSheets.WalkingSpriteSheet;
-import wizardike.assignment3.physics.movement.Movement;
 
+/**
+ * 0.0f directionX and 0.0f directionY means not moving
+ */
 public class WalkingAnimation {
     private WalkingSpriteSheet walkingSpriteSheet;
-    private Movement movement;
     private Sprite sprite;
+    private float directionX;
+    private float directionY;
     private float animationLength;
     private float animationTime;
 
-    public WalkingAnimation(WalkingSpriteSheet walkingSpriteSheet, Movement movement, Sprite sprite,
+    public WalkingAnimation(WalkingSpriteSheet walkingSpriteSheet, Sprite sprite,
                             float animationLength) {
         this.walkingSpriteSheet = walkingSpriteSheet;
-        this.movement = movement;
+        directionX = 0.0f;
+        directionY = 0.0f;
         this.sprite = sprite;
         this.animationLength = animationLength;
         animationTime = 0.0f;
@@ -28,13 +32,11 @@ public class WalkingAnimation {
         sprite.texHeight = walkingSpriteSheet.spriteTextureHeight;
     }
 
-    public WalkingAnimation(DataInputStream save,
-                            SpriteSheet[] spriteSheetRemappingTable,
-                            Movement[] movementRemappingTable,
-                            Sprite[] spriteRemappingTable) throws IOException {
-        walkingSpriteSheet = (WalkingSpriteSheet)spriteSheetRemappingTable[save.readInt()];
-        movement = movementRemappingTable[save.readInt()];
-        sprite = spriteRemappingTable[save.readInt()];
+    public WalkingAnimation(DataInputStream save, Deserializer deserializer) throws IOException {
+        walkingSpriteSheet = deserializer.getObject(save.readInt());
+        sprite = deserializer.getObject(save.readInt());
+        directionX = save.readFloat();
+        directionY = save.readFloat();
         animationLength = save.readFloat();
         animationTime = save.readFloat();
     }
@@ -44,15 +46,15 @@ public class WalkingAnimation {
         if(animationTime >= animationLength) animationTime = 0.0f;
 
         int frameNum = 0;
-        if(movement.currentSpeed != 0.0f) {
+        if(directionX != 0.0f || directionY != 0.0f) {
             frameNum = (int)(animationTime / animationLength * 9.0);
-            if (movement.directionX > 0.70711) {
+            if (directionX > 0.70711) {
                 // Moving Right
                 frameNum += 27;
-            } else if (movement.directionX < -0.70711) {
+            } else if (directionX < -0.70711) {
                 // Moving Left
                 frameNum += 9;
-            }else if (movement.directionY > 0.70711) {
+            }else if (directionY > 0.70711) {
                 // Moving Down
                 frameNum += 18;
             } //else Moving Up
@@ -64,13 +66,20 @@ public class WalkingAnimation {
         sprite.texV = y;
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable,
-                     IdentityHashMap<Movement, Integer> movementRemappingTable,
-                     IdentityHashMap<Sprite, Integer> spriteRemappingTable) throws IOException {
-        save.writeInt(spriteSheetRemappingTable.get(walkingSpriteSheet));
-        save.writeInt(movementRemappingTable.get(movement));
-        save.writeInt(spriteRemappingTable.get(sprite));
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
+        save.writeInt(serializer.getId(walkingSpriteSheet));
+        save.writeInt(serializer.getId(sprite));
+        save.writeFloat(directionX);
+        save.writeFloat(directionY);
         save.writeFloat(animationLength);
         save.writeFloat(animationTime);
+    }
+
+    public void setDirectionX(float directionX) {
+        this.directionX = directionX;
+    }
+
+    public void setDirectionY(float directionY) {
+        this.directionY = directionY;
     }
 }

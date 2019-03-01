@@ -1,5 +1,7 @@
 package wizardike.assignment3.talents.primary;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.assemblies.FireBoltParticle;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
@@ -21,8 +23,8 @@ public class FireBoltSpell implements PrimaryTalent {
     static void registerLoader() {
         PrimaryTalentLoader.addLoader(id, new PrimaryTalentLoader.Loader() {
             @Override
-            public PrimaryTalent load(DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
-                return new FireBoltSpell(save, spriteSheetRemappingTable);
+            public PrimaryTalent load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new FireBoltSpell(save, deserializer);
             }
         });
     }
@@ -43,13 +45,13 @@ public class FireBoltSpell implements PrimaryTalent {
         this.spriteSheet = spriteSheet;
     }
 
-    public FireBoltSpell(DataInputStream saveData, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
+    public FireBoltSpell(DataInputStream saveData, Deserializer deserializer) throws IOException {
         this.speed = saveData.readFloat();
         this.castTime = saveData.readFloat();
         this.lifeTime = saveData.readFloat();
         this.cooldown = saveData.readFloat();
         this.damage = saveData.readFloat();
-        this.spriteSheet = (WalkingSpriteSheet)spriteSheetRemappingTable[saveData.readInt()];
+        this.spriteSheet = deserializer.getObject(saveData.readInt());
     }
 
     @Override
@@ -96,13 +98,13 @@ public class FireBoltSpell implements PrimaryTalent {
     }
 
     @Override
-    public void save(DataOutputStream saveData, IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable) throws IOException {
+    public void save(DataOutputStream saveData, Serializer serializer) throws IOException {
         saveData.writeFloat(speed);
         saveData.writeFloat(castTime);
         saveData.writeFloat(lifeTime);
         saveData.writeFloat(cooldown);
         saveData.writeFloat(damage);
-        saveData.writeInt(spriteSheetRemappingTable.get(spriteSheet));
+        saveData.writeInt(serializer.getId(spriteSheet));
     }
 
     @Override

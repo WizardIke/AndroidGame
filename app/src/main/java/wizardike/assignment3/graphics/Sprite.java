@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.Vector2;
 
 public class Sprite {
@@ -27,8 +29,8 @@ public class Sprite {
         this.texHeight = texHeight;
     }
 
-    public Sprite(DataInputStream save, Vector2[] remappingTable) throws IOException {
-        position = remappingTable[save.readInt()];
+    public Sprite(DataInputStream save, Deserializer deserializer) throws IOException {
+        position = deserializer.getObject(save.readInt());
         offsetX = save.readFloat();
         offsetY = save.readFloat();
         width = save.readFloat();
@@ -39,8 +41,8 @@ public class Sprite {
         texHeight = save.readFloat();
     }
 
-    void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> remappingTable) throws IOException {
-        save.writeInt(remappingTable.get(position));
+    void save(DataOutputStream save, Serializer serializer) throws IOException {
+        save.writeInt(serializer.getId(position));
         save.writeFloat(offsetX);
         save.writeFloat(offsetY);
         save.writeFloat(width);

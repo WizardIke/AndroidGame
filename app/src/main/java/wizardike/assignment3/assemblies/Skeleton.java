@@ -11,7 +11,6 @@ import wizardike.assignment3.health.SkeletonHealth;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.physics.Collision.CollisionHandlers.Bite;
 import wizardike.assignment3.physics.Collision.TriggeredCircleHitBox;
-import wizardike.assignment3.physics.movement.Movement;
 
 /**
  * Created by Isaac on 14/12/2016.
@@ -26,22 +25,20 @@ public class Skeleton {
 
     public static int create(Level level, int master, float health, float maxHealth,
                              float posX, float posY, float speed, SkeletonSpriteSheet spriteSheet) {
-        int entity = level.getEngine().getEntityAllocator().allocate();
+        final int entity = level.getEngine().getEntityAllocator().allocate();
         level.getHealthSystem().addHealth(entity, new SkeletonHealth(maxHealth, health));
-        Vector2 position = new Vector2(posX, posY);
+        final Vector2 position = new Vector2(posX, posY);
         level.getPositionSystem().addPosition(entity, position);
-        Bite bite = new Bite(biteTime, biteDamage);
+        final Bite bite = new Bite(biteTime, biteDamage);
         level.getCollisionSystem().addCollidable(entity, new TriggeredCircleHitBox(position, radius,
                 (float)(Math.random() * massRange + minMass), bite));
-        level.getBasicAIControllerSystem().addBasicAIController(entity, new BasicAIController(speed));
-        Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,
+        level.getBasicAIControllerSystem().addBasicAIController(entity, new BasicAIController(position, speed));
+        final Sprite sprite = new Sprite(position, -radius, -radius, 2.0f * radius, 2.0f * radius,
                 spriteSheet.xCoordinates[0], spriteSheet.yCoordinates[0], spriteSheet.spriteTextureWidth, spriteSheet.spriteTextureHeight);
         level.getGeometrySystem().addSprite(entity, sprite);
-        Movement movement = new Movement(position);
-        level.getMovementSystem().addMovement(entity, movement);
-        WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, movement, sprite, animationLength);
+        final WalkingAnimation walkingAnimation = new WalkingAnimation(spriteSheet, sprite, animationLength);
         level.getWalkingAnimationSystem().addWalkingAnimation(entity, walkingAnimation);
-        Faction faction = level.getFactionSystem().getFaction(master);
+        final Faction faction = level.getFactionSystem().getFaction(master);
         if(faction != null) {
             level.getFactionSystem().addFaction(entity, faction);
         }

@@ -3,8 +3,9 @@ package wizardike.assignment3.graphics;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.Vector2;
 
 public class Camera {
@@ -16,14 +17,14 @@ public class Camera {
         this.zoom = zoom;
     }
 
-    public Camera(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
+    public Camera(DataInputStream save, Deserializer deserializer) throws IOException {
         int positionIndex = save.readInt();
-        position = positionIndex == -1 ? null : positionRemappingTable[positionIndex];
+        position = positionIndex == -1 ? null : (Vector2)deserializer.getObject(positionIndex);
         zoom = save.readFloat();
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
-        save.writeInt(position != null ? positionRemappingTable.get(position) : -1);
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
+        save.writeInt(position != null ? serializer.getId(position) : -1);
         save.writeFloat(zoom);
     }
 }

@@ -22,13 +22,14 @@ public class FrameTimer implements World {
         });
     }
 
+    @Override
     public void start() {
         oldTime = System.nanoTime();
         frameTime = 0.0f;
     }
 
     @Override
-    public void update(Engine engine) {
+    public void update() {
         long time = System.nanoTime();
         long delta = time - oldTime;
         oldTime = time;
@@ -38,6 +39,11 @@ public class FrameTimer implements World {
         frameTime = delta / 1000000000.0f;
     }
 
+    @Override
+    public void stop() {
+        //nothing to do
+    }
+
     public float getFrameTime() {
         return frameTime;
     }
@@ -45,7 +51,7 @@ public class FrameTimer implements World {
 
     @Override
     public void save(DataOutputStream save) throws IOException {
-        //do nothing
+        //nothing to do
     }
 
     @Override

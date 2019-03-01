@@ -85,8 +85,18 @@ public class MainWorld implements World {
     }
 
     @Override
-    public void update(Engine engine) {
+    public void start() {
+        level.start();
+    }
+
+    @Override
+    public void update() {
         level.update();
+    }
+
+    @Override
+    public void stop() {
+        level.stop();
     }
 
     @Override

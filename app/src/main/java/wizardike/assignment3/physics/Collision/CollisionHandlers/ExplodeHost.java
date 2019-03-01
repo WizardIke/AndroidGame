@@ -1,5 +1,6 @@
 package wizardike.assignment3.physics.Collision.CollisionHandlers;
 
+import wizardike.assignment3.Serialization.Deserializer;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.networking.SystemIds;
@@ -20,8 +21,8 @@ public class ExplodeHost extends Explode {
     static void registerLoader() {
         CollisionHandlerLoader.addLoader(id, new CollisionHandlerLoader.Loader() {
             @Override
-            public CollisionHandler load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-                return new ExplodeHost(save, positionRemappingTable);
+            public CollisionHandler load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new ExplodeHost(save, deserializer);
             }
         });
     }
@@ -30,8 +31,8 @@ public class ExplodeHost extends Explode {
         super(position, damage, lifeTime, vX, vY);
     }
 
-    public ExplodeHost(DataInputStream saveData, Vector2[] positionRemappingTable) throws IOException {
-        super(saveData, positionRemappingTable);
+    private ExplodeHost(DataInputStream saveData, Deserializer deserializer) throws IOException {
+        super(saveData, deserializer);
     }
 
     @Override

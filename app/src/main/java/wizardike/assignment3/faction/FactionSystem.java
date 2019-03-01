@@ -5,9 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import wizardike.assignment3.ComponentStorage;
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 
 public class FactionSystem {
     private final ComponentStorage<Faction> factionComponentStorage;
@@ -16,22 +15,17 @@ public class FactionSystem {
         factionComponentStorage = new ComponentStorage<>(Faction.class);
     }
 
-    public FactionSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public FactionSystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int factionCount = save.readInt();
         Faction[] factions = new Faction[factionCount];
         for(int i = 0; i != factionCount; ++i) {
-            try {
-                factions[i] = Faction.toFaction(save.readInt());
-            } catch (InvalidFactionException e) {
-                e.printStackTrace();
-            }
+            factions[i] = Faction.toFaction(save.readInt());
+            deserializer.addObject(factions[i]);
         }
         int[] factionEntities = new int[factionCount];
         for(int i = 0; i != factionCount; ++i) {
             final int oldEntity = save.readInt();
-            factionEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            factionEntities[i] = deserializer.getEntity(oldEntity);
         }
         factionComponentStorage = new ComponentStorage<>(Faction.class, factionEntities, factions);
     }
@@ -48,12 +42,13 @@ public class FactionSystem {
         factionComponentStorage.removeComponents(entity);
     }
 
-    public void save(DataOutputStream save) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final Faction[] factions = factionComponentStorage.getAllComponents();
         final int factionCount = factionComponentStorage.size();
         save.writeInt(factionCount);
         for(int i = 0; i != factionCount; ++i) {
             save.writeInt(factions[i].value);
+            serializer.addObject(factions[i]);
         }
 
         int[] entities = factionComponentStorage.getAllEntities();

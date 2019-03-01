@@ -5,7 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.EntityUpdater;
 import wizardike.assignment3.levels.Level;
 
 public class RegenerationHostSystem extends RegenerationSystem {
@@ -17,9 +18,8 @@ public class RegenerationHostSystem extends RegenerationSystem {
         super();
     }
 
-    public RegenerationHostSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
-                              final Health[] remappingTable) throws IOException {
-        super(save, engine, entityUpdater, remappingTable);
+    public RegenerationHostSystem(DataInputStream save, Deserializer deserializer) throws IOException {
+        super(save, deserializer);
     }
 
     public void removeRegenerations(int entity, Level level) {

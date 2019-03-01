@@ -3,8 +3,9 @@ package wizardike.assignment3.physics.Collision;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.physics.Collision.CollisionHandlers.CollisionHandler;
@@ -18,8 +19,8 @@ public class TriggeredCircleHitBox extends CircleHitBox implements Collidable {
     static void registerLoader() {
         CollidableLoader.addLoader(id, new CollidableLoader.Loader() {
             @Override
-            public Collidable load(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-                return new TriggeredCircleHitBox(save, positionRemappingTable);
+            public Collidable load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new TriggeredCircleHitBox(save, deserializer);
             }
         });
     }
@@ -29,11 +30,11 @@ public class TriggeredCircleHitBox extends CircleHitBox implements Collidable {
         this.handler = handler;
     }
 
-    private TriggeredCircleHitBox(DataInputStream save, Vector2[] positionRemappingTable) throws IOException {
-        super(positionRemappingTable[save.readInt()], save.readFloat(), save.readFloat());
+    private TriggeredCircleHitBox(DataInputStream save, Deserializer deserializer) throws IOException {
+        super((Vector2)deserializer.getObject(save.readInt()), save.readFloat(), save.readFloat());
 
         final int id = save.readInt();
-        handler = CollisionHandlerLoader.load(id, save, positionRemappingTable);
+        handler = CollisionHandlerLoader.load(id, save, deserializer);
     }
 
     @Override
@@ -61,10 +62,10 @@ public class TriggeredCircleHitBox extends CircleHitBox implements Collidable {
     }
 
     @Override
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> positionRemappingTable) throws IOException {
-        super.save(save, positionRemappingTable);
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
+        super.save(save, serializer);
         save.writeInt(handler.getId());
-        handler.save(save, positionRemappingTable);
+        handler.save(save, serializer);
     }
 
     @Override

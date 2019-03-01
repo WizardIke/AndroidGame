@@ -3,9 +3,9 @@ package wizardike.assignment3.updating;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
-import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.talents.primary.PrimaryTalent;
 import wizardike.assignment3.talents.primary.PrimaryTalentLoader;
@@ -16,8 +16,8 @@ public class PlayerAttackUpdater implements Updatable {
     static void registerLoader() {
         UpdatableLoader.addLoader(id, new UpdatableLoader.Loader() {
             @Override
-            public Updatable load(DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
-                return new PlayerAttackUpdater(save, spriteSheetRemappingTable);
+            public Updatable load(DataInputStream save, Deserializer deserializer) throws IOException {
+                return new PlayerAttackUpdater(save, deserializer);
             }
         });
     }
@@ -30,11 +30,11 @@ public class PlayerAttackUpdater implements Updatable {
         this.talent = talent;
     }
 
-    public PlayerAttackUpdater(DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
+    public PlayerAttackUpdater(DataInputStream save, Deserializer deserializer) throws IOException {
         directionX = save.readFloat();
         directionY = save.readFloat();
         final int talentId = save.readInt();
-        talent = PrimaryTalentLoader.load(talentId, save, spriteSheetRemappingTable);
+        talent = PrimaryTalentLoader.load(talentId, save, deserializer);
     }
 
     @Override
@@ -46,11 +46,11 @@ public class PlayerAttackUpdater implements Updatable {
     }
 
     @Override
-    public void save(DataOutputStream save, IdentityHashMap<SpriteSheet, Integer> spriteSheetRemappingTable) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         save.writeFloat(directionX);
         save.writeFloat(directionY);
         save.writeInt(talent.getId());
-        talent.save(save, spriteSheetRemappingTable);
+        talent.save(save, serializer);
     }
 
     @Override

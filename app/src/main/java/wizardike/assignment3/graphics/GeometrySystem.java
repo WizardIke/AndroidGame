@@ -9,9 +9,8 @@ import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
 import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
-import wizardike.assignment3.geometry.Vector2;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.levels.Level;
 
 public class GeometrySystem {
@@ -23,31 +22,30 @@ public class GeometrySystem {
         transparentSpriteComponentStorage = new ComponentStorage<>(Sprite.class);
     }
 
-    public GeometrySystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater,
-                          Vector2[] remappingTable) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public GeometrySystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int spriteCount = save.readInt();
         Sprite[] sprites = new Sprite[spriteCount];
         for(int i = 0; i != spriteCount; ++i) {
-            sprites[i] = new Sprite(save, remappingTable);
+            sprites[i] = new Sprite(save, deserializer);
+            deserializer.addObject(sprites[i]);
         }
         int[] entities = new int[spriteCount];
         for(int i = 0; i != spriteCount; ++i) {
             final int oldEntity = save.readInt();
-            entities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            entities[i] = deserializer.getEntity(oldEntity);
         }
         spriteComponentStorage = new ComponentStorage<>(Sprite.class, entities, sprites);
 
         final int transparentSpriteCount = save.readInt();
         Sprite[] transparentSprites = new Sprite[transparentSpriteCount];
         for(int i = 0; i != transparentSpriteCount; ++i) {
-            transparentSprites[i] = new Sprite(save, remappingTable);
+            transparentSprites[i] = new Sprite(save, deserializer);
+            deserializer.addObject(transparentSprites[i]);
         }
         int[] transparentEntities = new int[transparentSpriteCount];
         for(int i = 0; i != transparentSpriteCount; ++i) {
             final int oldEntity = save.readInt();
-            transparentEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            transparentEntities[i] = deserializer.getEntity(oldEntity);
         }
         transparentSpriteComponentStorage = new ComponentStorage<>(Sprite.class, transparentEntities, transparentSprites);
     }
@@ -161,12 +159,13 @@ public class GeometrySystem {
         transparentSpriteComponentStorage.removeComponentsKeepingOrdering(entity);
     }
 
-    public void save(DataOutputStream save, IdentityHashMap<Vector2, Integer> remappingTable) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         Sprite[] sprites = spriteComponentStorage.getAllComponents();
         final int spriteCount = spriteComponentStorage.size();
         save.writeInt(spriteCount);
         for(int i = 0; i != spriteCount; ++i) {
-            sprites[i].save(save, remappingTable);
+            sprites[i].save(save, serializer);
+            serializer.addObject(sprites[i]);
         }
         int[] entities = spriteComponentStorage.getAllEntities();
         for (int i = 0; i != spriteCount; ++i) {
@@ -177,7 +176,8 @@ public class GeometrySystem {
         final int transparentSpriteCount = transparentSpriteComponentStorage.size();
         save.writeInt(transparentSpriteCount);
         for(int i = 0; i != transparentSpriteCount; ++i) {
-            transparentSprites[i].save(save, remappingTable);
+            transparentSprites[i].save(save, serializer);
+            serializer.addObject(transparentSprites[i]);
         }
         int[] transparentEntities = transparentSpriteComponentStorage.getAllEntities();
         for (int i = 0; i != transparentSpriteCount; ++i) {
@@ -205,13 +205,5 @@ public class GeometrySystem {
 
     public int getTransparentSpriteCount() {
         return transparentSpriteComponentStorage.size();
-    }
-
-    public IdentityHashMap<Sprite, Integer> getSpriteRemappingTable() {
-        return spriteComponentStorage.getRemappingTable();
-    }
-
-    public IdentityHashMap<Sprite, Integer> getTransparentSpriteRemappingTable() {
-        return transparentSpriteComponentStorage.getRemappingTable();
     }
 }

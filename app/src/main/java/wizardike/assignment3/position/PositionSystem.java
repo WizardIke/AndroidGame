@@ -3,12 +3,10 @@ package wizardike.assignment3.position;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.IdentityHashMap;
 
 import wizardike.assignment3.ComponentStorage;
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityAllocator;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
+import wizardike.assignment3.Serialization.Serializer;
 import wizardike.assignment3.geometry.Vector2;
 
 public class PositionSystem {
@@ -18,18 +16,17 @@ public class PositionSystem {
         positionComponentStorage = new ComponentStorage<>(Vector2.class);
     }
 
-    public PositionSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater) throws IOException {
-        final EntityAllocator entityAllocator = engine.getEntityAllocator();
-
+    public PositionSystem(DataInputStream save, Deserializer deserializer) throws IOException {
         final int positionCount = save.readInt();
         Vector2[] positions = new Vector2[positionCount];
         for(int i = 0; i != positionCount; ++i) {
             positions[i] = new Vector2(save);
+            deserializer.addObject(positions[i]);
         }
         int[] positionEntities = new int[positionCount];
         for(int i = 0; i != positionCount; ++i) {
             final int oldEntity = save.readInt();
-            positionEntities[i] = entityUpdater.getEntity(oldEntity, entityAllocator);
+            positionEntities[i] = deserializer.getEntity(oldEntity);
         }
         positionComponentStorage = new ComponentStorage<>(Vector2.class, positionEntities, positions);
     }
@@ -50,16 +47,17 @@ public class PositionSystem {
         return positionComponentStorage.getAllEntities();
     }
 
-    public int entityCount() {
+    public int positionsCount() {
         return positionComponentStorage.size();
     }
 
-    public void save(DataOutputStream save) throws IOException {
+    public void save(DataOutputStream save, Serializer serializer) throws IOException {
         final Vector2[] positions = positionComponentStorage.getAllComponents();
         final int positionCount = positionComponentStorage.size();
         save.writeInt(positionCount);
         for(int i = 0; i != positionCount; ++i) {
             positions[i].save(save);
+            serializer.addObject(positions[i]);
         }
 
         int[] entities = positionComponentStorage.getAllEntities();
@@ -68,24 +66,12 @@ public class PositionSystem {
         }
     }
 
-    public Vector2[] getPositions() {
-        return positionComponentStorage.getAllComponents();
-    }
-
-    public int getPositionCount() {
-        return positionComponentStorage.size();
-    }
-
-    public IdentityHashMap<Vector2, Integer> getRemappingTable() {
-        return positionComponentStorage.getRemappingTable();
-    }
-
     public int indexOf(int entity, Vector2 position) {
         return positionComponentStorage.indexOf(entity, position);
     }
 
     public void handleMessage(DataInputStream networkIn) throws IOException {
-        Vector2 position = getPositions()[networkIn.readInt()];
+        Vector2 position = positionComponentStorage.getAllComponents()[networkIn.readInt()];
         position.setX(networkIn.readFloat());
         position.setY(networkIn.readFloat());
     }

@@ -1,40 +1,39 @@
-package wizardike.assignment3.physics.movement;
+package wizardike.assignment3.physics.velocity;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import wizardike.assignment3.Engine;
-import wizardike.assignment3.entity.EntityUpdater;
+import wizardike.assignment3.Serialization.Deserializer;
 import wizardike.assignment3.geometry.Vector2;
 import wizardike.assignment3.levels.Level;
 import wizardike.assignment3.networking.SystemIds;
 import wizardike.assignment3.position.PositionSystem;
 
-public class MovementHostSystem extends MovementSystem {
+public class VelocityHostSystem extends VelocitySystem {
     private static final float syncTime = 0.4f;
     private float syncCooldown = 0.0f;
 
-    public MovementHostSystem() {
+    public VelocityHostSystem() {
         super();
     }
 
-    public MovementHostSystem(DataInputStream save, Engine engine, final EntityUpdater entityUpdater, final Vector2[] remappingTable) throws IOException {
-        super(save, engine, entityUpdater, remappingTable);
+    public VelocityHostSystem(DataInputStream save, Deserializer deserializer) throws IOException {
+        super(save, deserializer);
     }
 
     /**
-     * Removes the movement components and notifies the client
+     * Removes the velocity components and notifies the client
      * @param entity The entity that the component belongs to.
      * @param level The current level
      */
-    public void removeMovements(int entity, Level level) {
+    public void removeVelocities(int entity, Level level) {
         final int levelIndex = level.getEngine().getMainWorld().getIdOfLevel(level);
         final DataOutputStream networkOut = level.getEngine().getNetworkConnection().getNetworkOut();
         final PositionSystem positionSystem = level.getPositionSystem();
         try {
-            for(Movement movement : movementComponentStorage.getComponents(entity)) {
-                syncPosition(networkOut, levelIndex, positionSystem, entity, movement.position);
+            for(Velocity velocity : movementComponentStorage.getComponents(entity)) {
+                syncPosition(networkOut, levelIndex, positionSystem, entity, velocity.position);
             }
             super.removeMovements(entity);
         } catch (IOException e) {
@@ -48,7 +47,7 @@ public class MovementHostSystem extends MovementSystem {
         float frameTime = level.getEngine().getFrameTimer().getFrameTime();
         syncCooldown += frameTime;
         if(syncCooldown >= syncTime){
-            Movement[] movements = getMovements();
+            Velocity[] velocities = getVelocities();
             int[] entities = movementComponentStorage.getAllEntities();
             DataOutputStream networkOut = level.getEngine().getNetworkConnection().getNetworkOut();
             final PositionSystem positionSystem = level.getPositionSystem();
@@ -56,7 +55,7 @@ public class MovementHostSystem extends MovementSystem {
             final int positionCount = movementComponentStorage.size();
             try {
                 for(int i = 0; i != positionCount; ++i) {
-                    syncPosition(networkOut, levelIndex, positionSystem, entities[i], movements[i].position);
+                    syncPosition(networkOut, levelIndex, positionSystem, entities[i], velocities[i].position);
                 }
             } catch (IOException e) {
                 level.getEngine().onError();

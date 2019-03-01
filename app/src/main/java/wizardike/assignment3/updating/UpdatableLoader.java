@@ -6,11 +6,12 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 
+import wizardike.assignment3.Serialization.Deserializer;
 import wizardike.assignment3.graphics.SpriteSheets.SpriteSheet;
 
 public class UpdatableLoader {
     interface Loader {
-        Updatable load(DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException;
+        Updatable load(DataInputStream save, Deserializer deserializer) throws IOException;
     }
     private static final SparseArray<Loader> loaders = new SparseArray<>();
 
@@ -22,7 +23,7 @@ public class UpdatableLoader {
         PlayerAttackUpdater.registerLoader();
    }
 
-    public static Updatable load(int id, DataInputStream save, SpriteSheet[] spriteSheetRemappingTable) throws IOException {
-        return loaders.get(id).load(save, spriteSheetRemappingTable);
+    public static Updatable load(int id, DataInputStream save, Deserializer deserializer) throws IOException {
+        return loaders.get(id).load(save, deserializer);
     }
 }
